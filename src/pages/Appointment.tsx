@@ -19,7 +19,41 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 
+const pageSizeOptions: number[] = [5, 10, 20, 50];
+
 const appointments = [
+  {
+    id: 'LH-2041',
+    patient: { name: 'Nguyễn Văn An', initials: 'NA' },
+    doctor: 'BS. Trần Thu Hà',
+    date: '24/10/2023',
+    time: '08:30',
+    status: 'Wait',
+  },
+  {
+    id: 'LH-2042',
+    patient: { name: 'Lê Thị Bình', initials: 'LB' },
+    doctor: 'BS. Nguyễn Minh Tuấn',
+    date: '24/10/2023',
+    time: '09:00',
+    status: 'Confirmed',
+  },
+  {
+    id: 'LH-2039',
+    patient: { name: 'Phạm Hồng Cường', initials: 'PC' },
+    doctor: 'BS. Trần Thu Hà',
+    date: '23/10/2023',
+    time: '15:00',
+    status: 'Completed',
+  },
+  {
+    id: 'LH-2040',
+    patient: { name: 'Hoàng Văn Dũng', initials: 'HD' },
+    doctor: 'BS. Lê Thị Mai',
+    date: '23/10/2023',
+    time: '15:30',
+    status: 'Cancelled',
+  },
   {
     id: 'LH-2041',
     patient: { name: 'Nguyễn Văn An', initials: 'NA' },
@@ -114,8 +148,13 @@ const columns: GridColDef[] = [
   },
 ];
 
+
 const Appointment: React.FC = () => {
   const [tab, setTab] = React.useState(0);
+
+  const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 5 });
+
+  const totalRows = appointments.length;
 
   return (
     <MainLayout>
@@ -154,12 +193,19 @@ const Appointment: React.FC = () => {
             <Chip label="Wait: 12" color="warning" />
             <Chip label="Confirmed: 24" color="info" />
           </Stack>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+          </Box>
           <Box sx={{ background: '#fff', borderRadius: 3, p: 2 }}>
             <DataGrid
               autoHeight
               rows={appointments}
               columns={columns}
-              pageSizeOptions={[5]}
+              pageSizeOptions={pageSizeOptions}
+              pagination
+              paginationMode="client"
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              rowCount={totalRows}
             />
           </Box>
         </Box>
