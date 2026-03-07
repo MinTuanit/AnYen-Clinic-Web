@@ -31,18 +31,20 @@ const Sidebar: React.FC = () => {
   return (
     <Box
       sx={{
-        width: 220, background: '#fff', p: '16px 8px',
-        borderRight: '1px solid #F0F0F0', display: 'flex',
+        width: 240, background: '#fff', p: '24px 12px',
+        borderRight: '1px solid #EEF2F6', display: 'flex',
         flexDirection: 'column', justifyContent: 'space-between', flexShrink: 0,
       }}
     >
       <Box>
         {/* Logo */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, mb: 3 }}>
-          <Avatar sx={{ bgcolor: '#2D9CDB', width: 32, height: 32, fontSize: 16 }}>A</Avatar>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, mb: 4 }}>
+          <Avatar sx={{ bgcolor: '#00A3FF', width: 36, height: 36, borderRadius: '8px' }}>
+            <Typography fontWeight={900} fontSize={20} color="#fff">A</Typography>
+          </Avatar>
           <Box>
-            <Typography fontWeight={700} fontSize={15} lineHeight={1.1}>AnYen</Typography>
-            <Typography fontSize={11} color="text.secondary">Clinic · Admin</Typography>
+            <Typography fontWeight={700} fontSize={16} lineHeight={1.2}>AnYen</Typography>
+            <Typography fontSize={12} color="text.secondary">Clinic - Admin</Typography>
           </Box>
         </Box>
         {/* Nav */}
@@ -53,26 +55,51 @@ const Sidebar: React.FC = () => {
                 selected={currentPath === nav.path}
                 onClick={() => navigate(nav.path)}
                 sx={{
-                  borderRadius: 2, mb: 0.5, px: 2,
-                  '&.Mui-selected': { background: '#EBF5FF', color: '#2D9CDB' },
-                  '&.Mui-selected .MuiListItemIcon-root': { color: '#2D9CDB' },
+                  borderRadius: '12px', mb: 0.5, px: 2, py: 1.2,
+                  '&.Mui-selected': {
+                    background: '#E6F6FF',
+                    color: '#00A3FF',
+                    '&:hover': { background: '#D6EFFF' }
+                  },
+                  '&:hover': { background: '#F8F9FA' },
+                  '&.Mui-selected .MuiListItemIcon-root': { color: '#00A3FF' },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 32, color: '#8A9BB2' }}>{nav.icon}</ListItemIcon>
-                <ListItemText primary={nav.label} primaryTypographyProps={{ fontSize: 13, fontWeight: currentPath === nav.path ? 600 : 400 }} />
+                <ListItemIcon sx={{ minWidth: 36, color: currentPath === nav.path ? '#00A3FF' : '#64748B' }}>
+                  <Box sx={{ display: 'flex', '& svg': { fontSize: 20 } }}>
+                    {nav.icon}
+                  </Box>
+                </ListItemIcon>
+                <ListItemText
+                  primary={nav.label}
+                  primaryTypographyProps={{
+                    fontSize: 14,
+                    fontWeight: currentPath === nav.path ? 600 : 500,
+                    color: currentPath === nav.path ? '#00A3FF' : '#64748B'
+                  }}
+                />
               </ListItemButton>
             </ListItem>
           ))}
         </List>
       </Box>
-      {/* User */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1, pt: 2, borderTop: '1px solid #F0F0F0' }}>
-        <Avatar sx={{ bgcolor: '#8A9BB2', width: 32, height: 32, fontSize: 13 }}>NV</Avatar>
+      {/* User Area */}
+      <Box sx={{
+        background: '#F8F9FA',
+        p: 1.5,
+        borderRadius: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5
+      }}>
+        <Avatar src="https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png" sx={{ width: 36, height: 36 }} />
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography fontWeight={600} fontSize={13} noWrap>Nguyễn Văn A</Typography>
           <Typography fontSize={11} color="text.secondary">Quản trị viên</Typography>
         </Box>
-        <Button sx={{ minWidth: 0, p: 0.5 }}><LogoutIcon fontSize="small" color="action" /></Button>
+        <Button sx={{ minWidth: 0, p: 0.5, color: '#64748B' }} onClick={() => navigate('/login')}>
+          <LogoutIcon sx={{ fontSize: 18 }} />
+        </Button>
       </Box>
     </Box>
   );
