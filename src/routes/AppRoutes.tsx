@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "../pages/Home";
 import Dashboard from "../pages/Dashboard";
-import Appointment from "../pages/Appointment";
+import Appointments from "../pages/Appointments";
 import Patients from "../pages/Patients";
 import Doctors from "../pages/Doctors";
 import Medicines from "../pages/Medicines";
@@ -15,7 +15,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/appointments" element={<Appointment />} />
+      <Route path="/appointments" element={<Appointments />} />
       <Route path="/patients" element={<Patients />} />
       <Route path="/doctors" element={<Doctors />} />
       <Route path="/medicines" element={<Medicines />} />
