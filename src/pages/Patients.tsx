@@ -21,6 +21,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import DescriptionIcon from '@mui/icons-material/Description';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const mockPatients = [
   { id: 'BN001', name: 'Nguyễn Văn A', dob: '12/05/1985', gender: 'Nam', phone: '0901 234 567', lastVisit: '20/10/2023', status: 'Active' },
@@ -145,9 +148,10 @@ const Patients: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton size="small">
-                      <MoreVertIcon fontSize="small" sx={{ color: '#64748B' }} />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                      <IconButton size="small" sx={{ color: '#00A3FF' }}><DescriptionIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" sx={{ color: '#EF4444' }}><DeleteIcon fontSize="small" /></IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}

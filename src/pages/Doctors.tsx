@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DescriptionIcon from '@mui/icons-material/Description';
-import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Sidebar from '../components/Sidebar';
@@ -138,9 +138,9 @@ const Doctors: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                       <IconButton size="small" sx={{ color: '#00A3FF' }}><DescriptionIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" sx={{ color: '#64748B' }}><EditIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" sx={{ color: '#EF4444' }}><DeleteIcon fontSize="small" /></IconButton>
                     </Box>
                   </TableCell>
                 </TableRow>

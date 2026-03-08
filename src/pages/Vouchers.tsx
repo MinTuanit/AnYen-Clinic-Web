@@ -21,6 +21,8 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -235,7 +237,10 @@ const Vouchers: React.FC = () => {
                     </Box>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton size="small"><MoreVertIcon sx={{ color: '#94A3B8' }} /></IconButton>
+                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                      <IconButton size="small" sx={{ color: '#00A3FF' }}><EditIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" sx={{ color: '#EF4444' }}><DeleteIcon fontSize="small" /></IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
