@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import Sidebar from '../components/Sidebar';
 import Grid from '@mui/material/Grid';
+import StatCard from '../components/StatCard';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -33,10 +34,10 @@ const barData = [
 ];
 
 const stats = [
-  { label: 'Tổng doanh thu', subLabel: 'VND', value: '1.250.000.000', change: '+12.5%', icon: <DashboardIcon sx={{ color: '#2D9CDB' }} />, iconBg: '#EBF5FF' },
-  { label: 'Số lượng Bác sĩ', subLabel: 'nhân sự', value: '45', change: '+2%', icon: <LocalHospitalIcon sx={{ color: '#27AE60' }} />, iconBg: '#E8F8F1' },
-  { label: 'Tổng số Bệnh nhân', subLabel: 'người', value: '1.200', change: '+5.2%', icon: <PeopleIcon sx={{ color: '#9B59B6' }} />, iconBg: '#F5EEF8' },
-  { label: 'Lịch khám mới', subLabel: 'hôm nay', value: '28', change: '-15%', icon: <CalendarTodayIcon sx={{ color: '#E67E22' }} />, iconBg: '#FEF5E7' },
+  { label: 'Tổng doanh thu', subLabel: 'VND', value: '1.250.000.000', change: '+12.5%', icon: <DashboardIcon />, iconBg: '#EBF5FF' },
+  { label: 'Số lượng Bác sĩ', subLabel: 'người', value: '45', change: '+2%', icon: <LocalHospitalIcon />, iconBg: '#E8F8F1' },
+  { label: 'Tổng số Bệnh nhân', subLabel: 'người', value: '1.200', change: '+5.2%', icon: <PeopleIcon />, iconBg: '#F5EEF8' },
+  { label: 'Lịch khám mới', subLabel: '', value: '28', change: '-15%', icon: <CalendarTodayIcon />, iconBg: '#FEF5E7' },
 ];
 
 const transactions = [
@@ -78,26 +79,10 @@ const Dashboard: React.FC = () => {
         </Box>
 
         {/* Stats Cards */}
-        <Grid container spacing={2} mb={3}>
+        <Grid container spacing={3} mb={4}>
           {stats.map((stat) => (
             <Grid key={stat.label} size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper sx={{ p: 2, borderRadius: 3, boxShadow: 'none', background: '#fff', position: 'relative', overflow: 'hidden' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box sx={{ bgcolor: stat.iconBg, borderRadius: 2, p: 1, display: 'flex' }}>{stat.icon}</Box>
-                  <Chip
-                    label={stat.change}
-                    size="small"
-                    sx={{
-                      fontSize: 11, fontWeight: 600, height: 22,
-                      bgcolor: stat.change.startsWith('+') ? '#E8F8F1' : '#FDEDEE',
-                      color: stat.change.startsWith('+') ? '#27AE60' : '#E74C3C',
-                    }}
-                  />
-                </Box>
-                <Typography fontWeight={700} fontSize={20} mt={1.5} lineHeight={1}>{stat.value}</Typography>
-                <Typography fontSize={12} color="text.secondary" mt={0.5}>{stat.subLabel}</Typography>
-                <Typography fontSize={13} color="text.secondary" fontWeight={500} mt={0.5}>{stat.label}</Typography>
-              </Paper>
+              <StatCard {...stat} />
             </Grid>
           ))}
         </Grid>

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
+import StatCard from '../components/StatCard';
+import ActionButton from '../components/ActionButton';
+import Grid from '@mui/material/Grid';
 import {
   Box,
   Typography,
-  Button,
   TextField,
   InputAdornment,
   Tabs,
@@ -17,10 +19,8 @@ import {
   TableRow,
   Paper,
   Pagination,
-  Grid
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
@@ -81,7 +81,7 @@ const Vouchers: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC' }}>
       <Sidebar />
-      <Box sx={{ flex: 1, p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box sx={{ flex: 1, p: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Top Header with Notification */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box>
@@ -113,20 +113,10 @@ const Vouchers: React.FC = () => {
                 }
               }}
             />
-            <Button
-              variant="contained"
-              sx={{
-                background: '#00A3FF',
-                textTransform: 'none',
-                borderRadius: '10px',
-                px: 3,
-                fontWeight: 600,
-                height: 40,
-                '&:hover': { background: '#008BD9' }
-              }}
-            >
-              + Thêm voucher mới
-            </Button>
+            <ActionButton
+              label="Thêm voucher mới"
+              onClick={() => { }}
+            />
             <IconButton sx={{ background: '#fff', borderRadius: '10px', p: 1, border: '1px solid #E2E8F0' }}>
               <NotificationsNoneIcon sx={{ color: '#64748B' }} />
             </IconButton>
@@ -134,39 +124,33 @@ const Vouchers: React.FC = () => {
         </Box>
 
         {/* Stats Cards */}
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 3 }}>
-            <Box sx={{ background: '#fff', p: 1, borderRadius: '10px', border: '1px solid #E2E8F0', position: 'relative' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box sx={{ background: '#E0F2FE', p: 0.75, borderRadius: '6px', mb: 1 }}>
-                  <LocalOfferIcon sx={{ color: '#00A3FF', fontSize: 18 }} />
-                </Box>
-              </Box>
-              <Typography sx={{ color: '#64748B', fontSize: 11, fontWeight: 500 }}>Tổng số mã</Typography>
-              <Typography sx={{ color: '#1E293B', fontSize: 18, fontWeight: 700, mt: 0.1 }}>{totalVouchersCount}</Typography>
-            </Box>
+        <Grid container spacing={3} mb={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              label="Tổng số mã"
+              value={totalVouchersCount}
+              subLabel="mã voucher"
+              icon={<LocalOfferIcon />}
+              iconBg="#E0F2FE"
+            />
           </Grid>
-          <Grid size={{ xs: 3 }}>
-            <Box sx={{ background: '#fff', p: 1, borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box sx={{ background: '#EEF2FF', p: 0.75, borderRadius: '6px', mb: 1 }}>
-                  <CheckCircleIcon sx={{ color: '#4F46E5', fontSize: 18 }} />
-                </Box>
-              </Box>
-              <Typography sx={{ color: '#64748B', fontSize: 11, fontWeight: 500 }}>Đang hoạt động</Typography>
-              <Typography sx={{ color: '#1E293B', fontSize: 18, fontWeight: 700, mt: 0.1 }}>{activeVouchersCount}</Typography>
-            </Box>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              label="Voucher khả dụng"
+              value={activeVouchersCount}
+              subLabel="đang hoạt động"
+              icon={<CheckCircleIcon sx={{ color: '#27AE60' }} />}
+              iconBg="#E8F8F1"
+            />
           </Grid>
-          <Grid size={{ xs: 3 }}>
-            <Box sx={{ background: '#fff', p: 1, borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box sx={{ background: '#FFF7ED', p: 0.75, borderRadius: '6px', mb: 1 }}>
-                  <HourglassEmptyIcon sx={{ color: '#F97316', fontSize: 18 }} />
-                </Box>
-              </Box>
-              <Typography sx={{ color: '#64748B', fontSize: 11, fontWeight: 500 }}>Hết hạn</Typography>
-              <Typography sx={{ color: '#1E293B', fontSize: 18, fontWeight: 700, mt: 0.1 }}>{inactiveVouchersCount}</Typography>
-            </Box>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              label="Hết hiệu lực"
+              value={inactiveVouchersCount}
+              subLabel="hết hạn / dừng"
+              icon={<HourglassEmptyIcon sx={{ color: '#F97316' }} />}
+              iconBg="#FFF7ED"
+            />
           </Grid>
         </Grid>
 

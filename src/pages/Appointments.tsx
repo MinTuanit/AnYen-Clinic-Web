@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
+import ActionButton from '../components/ActionButton';
 import {
   Box,
   Typography,
@@ -60,19 +61,10 @@ const Appointment: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, color: '#1E293B' }}>
             Quản lý Lịch hẹn
           </Typography>
-          <Button
-            variant="contained"
-            sx={{
-              background: '#00A3FF',
-              textTransform: 'none',
-              borderRadius: '10px',
-              px: 3,
-              fontWeight: 600,
-              '&:hover': { background: '#008BD9' }
-            }}
-          >
-            + Thêm Lịch hẹn mới
-          </Button>
+          <ActionButton
+            label="Thêm lịch hẹn mới"
+            onClick={() => { }}
+          />
         </Box>
 
         {/* Tabs & Search */}
@@ -122,8 +114,8 @@ const Appointment: React.FC = () => {
 
         {/* Status Chips Summary */}
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Chip label="Sắp đến: 12" size="small" sx={{ background: '#FFF7ED', color: '#F97316', fontWeight: 600 }} />
-          <Chip label="Đã xác nhận: 24" size="small" sx={{ background: '#E0F2FE', color: '#00A3FF', fontWeight: 600 }} />
+          <Chip label="Sắp đến: 12" sx={{ background: '#FFF7ED', color: '#F97316', fontWeight: 600, height: '32px' }} />
+          <Chip label="Đã xác nhận: 24" sx={{ background: '#E0F2FE', color: '#00A3FF', fontWeight: 600, height: '32px' }} />
         </Box>
 
         {/* Appointments Table */}
