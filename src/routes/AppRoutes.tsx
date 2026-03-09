@@ -6,6 +6,7 @@ import Patients from "../pages/Patients";
 import Doctors from "../pages/Doctors";
 import Medicines from "../pages/Medicines";
 import Vouchers from "../pages/Vouchers";
+import Orders from "../pages/Orders";
 import Chat from "../pages/Chat";
 import Quiz from "../pages/Quiz";
 import Settings from "../pages/Settings";
@@ -20,6 +21,7 @@ export default function AppRoutes() {
       <Route path="/doctors" element={<Doctors />} />
       <Route path="/medicines" element={<Medicines />} />
       <Route path="/vouchers" element={<Vouchers />} />
+      <Route path="/orders" element={<Orders />} />
       <Route path="/chat" element={<Chat />} />
       <Route path="/quiz" element={<Quiz />} />
       <Route path="/settings" element={<Settings />} />

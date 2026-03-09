@@ -10,6 +10,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
   { label: 'Bác sĩ', icon: <LocalHospitalIcon fontSize="small" />, path: '/doctors' },
   { label: 'Thuốc', icon: <MedicationIcon fontSize="small" />, path: '/medicines' },
   { label: 'Voucher', icon: <ConfirmationNumberIcon fontSize="small" />, path: '/vouchers' },
+  { label: 'Đơn hàng', icon: <ReceiptLongIcon fontSize="small" />, path: '/orders' },
   { label: 'Chat', icon: <ChatIcon fontSize="small" />, path: '/chat' },
   { label: 'Tạo trắc nghiệm', icon: <QuizIcon fontSize="small" />, path: '/quiz' },
   { label: 'Cài đặt', icon: <SettingsIcon fontSize="small" />, path: '/settings' },
