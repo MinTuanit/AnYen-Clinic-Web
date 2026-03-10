@@ -9,6 +9,7 @@ import Vouchers from "../pages/Vouchers";
 import Orders from "../pages/Orders";
 import Chat from "../pages/Chat";
 import Quiz from "../pages/Quiz";
+import CreateQuiz from "../pages/CreateQuiz";
 import Settings from "../pages/Settings";
 
 export default function AppRoutes() {
@@ -24,6 +25,7 @@ export default function AppRoutes() {
       <Route path="/orders" element={<Orders />} />
       <Route path="/chat" element={<Chat />} />
       <Route path="/quiz" element={<Quiz />} />
+      <Route path="/quiz/create" element={<CreateQuiz />} />
       <Route path="/settings" element={<Settings />} />
     </Routes>
   );
