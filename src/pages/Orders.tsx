@@ -21,8 +21,10 @@ import {
   Avatar,
   Chip,
   IconButton,
-  Pagination,
 } from '@mui/material';
+import Pagination from '@mui/material/Pagination';
+import OrderDialog from '../components/orders/OrderDialog';
+import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -35,6 +37,79 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 // Mock data based on Order model and UI requirements
 const mockOrders = [
+  {
+    id: 'ORD001',
+    customer: { name: 'Nguyễn Văn A', avatar: '' },
+    total: 450000,
+    date: '12/03/2024',
+    orderStatus: 'Processing',
+    paymentStatus: 'Paid',
+    delivery_address: '123 Đường ABC, Quận 1, TP.HCM',
+    patient_id: 'PAT001',
+    medicines: [
+      { name: 'Paracetamol 500mg', dosage: 'Uống 1 viên sau ăn', quantity: 2, price: 50000 },
+      { name: 'Vitamin C 1000mg', dosage: 'Sáng 1 viên', quantity: 1, price: 150000 },
+      { name: 'Antibiotic X', dosage: 'Ngày 2 lần', quantity: 1, price: 200000 }
+    ],
+    voucher: { code: 'SALES10', discount_type: 'Percent', discount_value: 10, max_discount: 50000 }
+  },
+  {
+    id: 'ORD002',
+    customer: { name: 'Trần Thị B', avatar: '' },
+    total: 1200000,
+    date: '11/03/2024',
+    orderStatus: 'Delivering',
+    paymentStatus: 'Paid',
+    delivery_address: '456 Đường XYZ, Quận 7, TP.HCM',
+    patient_id: 'PAT002',
+    medicines: [
+      { name: 'Special Treatment Kit', dosage: 'Theo chỉ dẫn', quantity: 1, price: 1200000 }
+    ],
+    voucher: null
+  },
+  {
+    id: 'ORD003',
+    customer: { name: 'Lê Văn C', avatar: '' },
+    total: 890000,
+    date: '10/03/2024',
+    orderStatus: 'Completed',
+    paymentStatus: 'Paid',
+    delivery_address: '789 Đường LMN, Thủ Đức, TP.HCM',
+    patient_id: 'PAT003',
+    medicines: [
+      { name: 'Medicine A', dosage: 'Sáng 1 viên', quantity: 3, price: 100000 },
+      { name: 'Medicine B', dosage: 'Tối 1 viên', quantity: 2, price: 300000 }
+    ],
+    voucher: { code: 'FIXED50', discount_type: 'Fixed', discount_value: 50000 }
+  },
+  {
+    id: 'ORD004',
+    customer: { name: 'Phạm Thị D', avatar: '' },
+    total: 300000,
+    date: '09/03/2024',
+    orderStatus: 'Processing',
+    paymentStatus: 'Pending',
+    delivery_address: '321 Đường GHI, Quận 3, TP.HCM',
+    patient_id: 'PAT004',
+    medicines: [
+      { name: 'Eye Drops', dosage: 'Ngày 3 lần', quantity: 2, price: 150000 }
+    ],
+    voucher: null
+  },
+  {
+    id: 'ORD005',
+    customer: { name: 'Hoàng Văn E', avatar: '' },
+    total: 150000,
+    date: '08/03/2024',
+    orderStatus: 'Cancelled',
+    paymentStatus: 'Refunded',
+    delivery_address: '654 Đường JKL, Bình Thạnh, TP.HCM',
+    patient_id: 'PAT005',
+    medicines: [
+      { name: 'Bandages', dosage: 'Thay hàng ngày', quantity: 5, price: 30000 }
+    ],
+    voucher: null
+  },
   { id: 'ORD-9421', customer: { name: 'Nguyễn Văn An', initials: 'NA' }, date: '14/03/2024', total: 1250000, paymentStatus: 'Paid', orderStatus: 'Delivering' },
   { id: 'ORD-9422', customer: { name: 'Trần Thị Hoa', initials: 'TH' }, date: '13/03/2024', total: 850000, paymentStatus: 'Pending', orderStatus: 'Processing' },
   { id: 'ORD-9423', customer: { name: 'Lê Minh', initials: 'LM' }, date: '12/03/2024', total: 2100000, paymentStatus: 'Paid', orderStatus: 'Completed' },
@@ -66,6 +141,10 @@ const Orders: React.FC = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+
   const pageSize = 5;
 
   const formatCurrency = (amount: number) => {
@@ -104,6 +183,31 @@ const Orders: React.FC = () => {
     setPage(1);
   };
 
+  const handleCreateOrder = () => {
+    setSelectedOrder(null);
+    setIsOrderDialogOpen(true);
+  };
+
+  const handleViewOrder = (order: any) => {
+    setSelectedOrder(order);
+    setIsOrderDialogOpen(true);
+  };
+
+  const handleDeleteClick = (order: any) => {
+    setSelectedOrder(order);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveOrder = (data: any) => {
+    console.log('Saving order:', data);
+    // Logic to update state or call API would go here
+  };
+
+  const handleConfirmDelete = () => {
+    console.log('Deleting order:', selectedOrder?.id);
+    // Logic to update state or call API would go here
+  };
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC' }}>
       <Sidebar />
@@ -136,7 +240,7 @@ const Orders: React.FC = () => {
             </Button>
             <ActionButton
               label="Tạo đơn mới"
-              onClick={() => { }}
+              onClick={handleCreateOrder}
             />
           </Box>
         </Box>
@@ -160,7 +264,7 @@ const Orders: React.FC = () => {
         </Box>
 
         {/* Filter Bar */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, mt: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', }}>
           <TextField
             placeholder="Tìm kiếm mã đơn, tên khách hàng..."
             size="small"
@@ -171,7 +275,7 @@ const Orders: React.FC = () => {
             }}
             sx={{
               width: 380,
-              '& .MuiOutlinedInput-root': {
+              '& .MuiOutl8nedInput-root': {
                 bgcolor: '#fff',
                 borderRadius: '12px',
               }
@@ -308,10 +412,10 @@ const Orders: React.FC = () => {
                   </TableCell>
                   <TableCell align="right">
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" sx={{ color: '#64748B' }}>
+                      <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleViewOrder(order)}>
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" sx={{ color: '#EF4444' }}>
+                      <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(order)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Box>
@@ -339,6 +443,23 @@ const Orders: React.FC = () => {
             />
           </Box>
         </TableContainer>
+
+        {/* Dialogs */}
+        <OrderDialog
+          open={isOrderDialogOpen}
+          onClose={() => setIsOrderDialogOpen(false)}
+          onSave={handleSaveOrder}
+          order={selectedOrder}
+        />
+
+        <DeleteConfirmDialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Xóa Đơn hàng"
+          message="Bạn có chắc chắn muốn xóa đơn hàng này? Hành động này không thể hoàn tác."
+          itemName={selectedOrder ? `Đơn hàng #${selectedOrder.id}` : ''}
+        />
       </Box>
     </Box>
   );

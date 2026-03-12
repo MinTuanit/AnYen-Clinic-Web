@@ -26,7 +26,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import VoucherDialog from '../components/vouchers/VoucherDialog';
+import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 
 const mockVouchers = [
   { id: 'PSYCH20', name: 'Ưu đãi hè 2024', discount: '20%', expiry: '31/08/2024', usage: '50/100', status: 'Active' },
@@ -54,6 +55,10 @@ const mockVouchers = [
 const Vouchers: React.FC = () => {
   const [tab, setTab] = useState(0); // 0: Tất cả, 1: Đang chạy (Active), 2: Hết hạn (Inactive)
   const [page, setPage] = useState(1);
+  const [isVoucherDialogOpen, setIsVoucherDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
+  
   const pageSize = 5;
 
   // Derived data
@@ -75,6 +80,31 @@ const Vouchers: React.FC = () => {
   const handleTabChange = (_: any, newValue: number) => {
     setTab(newValue);
     setPage(1); // Reset to first page when filtering
+  };
+
+  const handleAddVoucher = () => {
+    setSelectedVoucher(null);
+    setIsVoucherDialogOpen(true);
+  };
+
+  const handleEditVoucher = (voucher: any) => {
+    setSelectedVoucher(voucher);
+    setIsVoucherDialogOpen(true);
+  };
+
+  const handleDeleteClick = (voucher: any) => {
+    setSelectedVoucher(voucher);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveVoucher = (data: any) => {
+    console.log('Saving voucher:', data);
+    // Logic to update state or call API would go here
+  };
+
+  const handleConfirmDelete = () => {
+    console.log('Deleting voucher:', selectedVoucher?.id);
+    // Logic to update state or call API would go here
   };
 
 
@@ -115,11 +145,8 @@ const Vouchers: React.FC = () => {
             />
             <ActionButton
               label="Thêm voucher mới"
-              onClick={() => { }}
+              onClick={handleAddVoucher}
             />
-            <IconButton sx={{ background: '#fff', borderRadius: '10px', p: 1, border: '1px solid #E2E8F0' }}>
-              <NotificationsNoneIcon sx={{ color: '#64748B' }} />
-            </IconButton>
           </Box>
         </Box>
 
@@ -222,8 +249,8 @@ const Vouchers: React.FC = () => {
                   </TableCell>
                   <TableCell align="right">
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" sx={{ color: '#00A3FF' }}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" sx={{ color: '#EF4444' }}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditVoucher(voucher)}><EditIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(voucher)}><DeleteIcon fontSize="small" /></IconButton>
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -250,6 +277,23 @@ const Vouchers: React.FC = () => {
             />
           </Box>
         </TableContainer>
+
+        {/* Dialogs */}
+        <VoucherDialog
+          open={isVoucherDialogOpen}
+          onClose={() => setIsVoucherDialogOpen(false)}
+          onSave={handleSaveVoucher}
+          voucher={selectedVoucher}
+        />
+
+        <DeleteConfirmDialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Xóa Voucher"
+          message="Bạn có chắc chắn muốn xóa voucher này? Hành động này không thể hoàn tác."
+          itemName={selectedVoucher?.name}
+        />
       </Box>
     </Box>
   );

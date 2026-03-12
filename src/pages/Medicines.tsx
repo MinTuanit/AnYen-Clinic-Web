@@ -21,12 +21,15 @@ import {
   Tooltip
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
+import MedicineDialog from '../components/medicines/MedicineDialog';
+import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import MedicationIcon from '@mui/icons-material/Medication';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 // Mock data based on Drug model and image requirements
 const mockMedicines = [
@@ -50,6 +53,10 @@ const categoryStyles: Record<string, { bg: string, color: string }> = {
 
 const Medicines: React.FC = () => {
   const [page, setPage] = useState(1);
+  const [isMedicineDialogOpen, setIsMedicineDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedMedicine, setSelectedMedicine] = useState<any>(null);
+
   const pageSize = 5;
   const total = mockMedicines.length;
   const pageCount = Math.ceil(total / pageSize);
@@ -77,6 +84,31 @@ const Medicines: React.FC = () => {
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
+  };
+
+  const handleAddMedicine = () => {
+    setSelectedMedicine(null);
+    setIsMedicineDialogOpen(true);
+  };
+
+  const handleEditMedicine = (medicine: any) => {
+    setSelectedMedicine(medicine);
+    setIsMedicineDialogOpen(true);
+  };
+
+  const handleDeleteClick = (medicine: any) => {
+    setSelectedMedicine(medicine);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveMedicine = (data: any) => {
+    console.log('Saving medicine:', data);
+    // Logic to update state or call API would go here
+  };
+
+  const handleConfirmDelete = () => {
+    console.log('Deleting medicine:', selectedMedicine?.id);
+    // Logic to update state or call API would go here
   };
 
   return (
@@ -116,7 +148,7 @@ const Medicines: React.FC = () => {
             />
             <ActionButton
               label="Thêm thuốc"
-              onClick={() => { }}
+              onClick={handleAddMedicine}
             />
           </Box>
         </Box>
@@ -216,8 +248,11 @@ const Medicines: React.FC = () => {
                   <TableCell sx={{ color: '#1E293B', fontWeight: 600 }}>{formatCurrency(med.price)}</TableCell>
                   <TableCell align="right" sx={{ pr: 2 }}>
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" sx={{ color: '#00A3FF' }}>
+                      <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditMedicine(med)}>
                         <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(med)}>
+                        <DeleteIcon fontSize="small" />
                       </IconButton>
                       <Tooltip title="Actions">
                         <IconButton size="small" sx={{ color: '#94A3B8' }}>
@@ -256,6 +291,23 @@ const Medicines: React.FC = () => {
             />
           </Box>
         </TableContainer>
+
+        {/* Dialogs */}
+        <MedicineDialog
+          open={isMedicineDialogOpen}
+          onClose={() => setIsMedicineDialogOpen(false)}
+          onSave={handleSaveMedicine}
+          medicine={selectedMedicine}
+        />
+
+        <DeleteConfirmDialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Xóa Thuốc"
+          message="Bạn có chắc chắn muốn xóa thông tin thuốc này? Hành động này không thể hoàn tác."
+          itemName={selectedMedicine?.name}
+        />
       </Box>
     </Box>
   );
