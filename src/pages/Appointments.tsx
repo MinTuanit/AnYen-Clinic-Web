@@ -25,6 +25,8 @@ import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import AppointmentDialog from '../components/appointments/AppointmentDialog';
+import DeleteConfirmDialog from '../components/doctors/DeleteConfirmDialog';
 
 const mockAppointments = [
   { id: 'LH-2041', patient: { name: 'Nguyễn Văn An', initials: 'NA' }, doctor: 'BS. Trần Thu Hà', date: '24/10/2023', time: '08:30', status: 'Wait' },
@@ -47,6 +49,35 @@ const statusStyles: Record<string, { bg: string, color: string }> = {
 const Appointment: React.FC = () => {
   const [tab, setTab] = useState(0);
   const [page, setPage] = useState(1);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+
+  const handleAddAppointment = () => {
+    setSelectedAppointment(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditAppointment = (app: any) => {
+    setSelectedAppointment(app);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (app: any) => {
+    setSelectedAppointment(app);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleSaveAppointment = (data: any) => {
+    console.log('Saving appointment:', data);
+    // Logic to update state or call API
+  };
+
+  const handleConfirmDelete = () => {
+    console.log('Deleting appointment:', selectedAppointment?.id);
+    // Logic to delete
+    setDeleteDialogOpen(false);
+  };
   const pageSize = 5;
   const total = mockAppointments.length;
   const pageCount = Math.ceil(total / pageSize);
@@ -63,7 +94,7 @@ const Appointment: React.FC = () => {
           </Typography>
           <ActionButton
             label="Thêm lịch hẹn mới"
-            onClick={() => { }}
+            onClick={handleAddAppointment}
           />
         </Box>
 
@@ -162,8 +193,12 @@ const Appointment: React.FC = () => {
                   </TableCell>
                   <TableCell align="right">
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" sx={{ color: '#00A3FF' }}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" sx={{ color: '#EF4444' }}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditAppointment(app)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(app)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -189,6 +224,21 @@ const Appointment: React.FC = () => {
             />
           </Box>
         </TableContainer>
+
+        {/* Dialogs */}
+        <AppointmentDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          onSave={handleSaveAppointment}
+          appointment={selectedAppointment}
+        />
+
+        <DeleteConfirmDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          itemName={`Lịch hẹn #${selectedAppointment?.id}`}
+        />
       </Box>
     </Box>
   );

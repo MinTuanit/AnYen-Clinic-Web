@@ -17,11 +17,13 @@ import {
   InputAdornment
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DescriptionIcon from '@mui/icons-material/Description';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Sidebar from '../components/Sidebar';
+import DoctorDialog from '../components/doctors/DoctorDialog';
+import DeleteConfirmDialog from '../components/doctors/DeleteConfirmDialog';
+import EditIcon from '@mui/icons-material/Edit';
 
 // Dữ liệu mẫu
 const mockDoctors = [
@@ -35,10 +37,39 @@ const mockDoctors = [
 
 const Doctors: React.FC = () => {
   const [page, setPage] = useState(1);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+
   const pageSize = 5;
   const total = mockDoctors.length;
   const pageCount = Math.ceil(total / pageSize);
   const pagedDoctors = mockDoctors.slice((page - 1) * pageSize, page * pageSize);
+
+  const handleAddDoctor = () => {
+    setSelectedDoctor(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditDoctor = (doctor: any) => {
+    setSelectedDoctor(doctor);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (doctor: any) => {
+    setSelectedDoctor(doctor);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleSaveDoctor = (data: any) => {
+    console.log('Saving doctor:', data);
+    // Logic to update state or call API would go here
+  };
+
+  const handleConfirmDelete = () => {
+    console.log('Deleting doctor:', selectedDoctor?.id);
+    // Logic to delete would go here
+  };
 
   return (
     <Box sx={{ display: 'flex', bgcolor: '#f8fafc', minHeight: '100vh' }}>
@@ -53,6 +84,7 @@ const Doctors: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
+            onClick={handleAddDoctor}
             sx={{
               background: '#00A3FF',
               textTransform: 'none',
@@ -139,8 +171,20 @@ const Doctors: React.FC = () => {
                   </TableCell>
                   <TableCell align="right">
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" sx={{ color: '#00A3FF' }}><DescriptionIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" sx={{ color: '#EF4444' }}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton
+                        size="small"
+                        sx={{ color: '#00A3FF' }}
+                        onClick={() => handleEditDoctor(doctor)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={{ color: '#EF4444' }}
+                        onClick={() => handleDeleteClick(doctor)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -166,6 +210,21 @@ const Doctors: React.FC = () => {
             />
           </Box>
         </TableContainer>
+
+        {/* Dialogs */}
+        <DoctorDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          onSave={handleSaveDoctor}
+          doctor={selectedDoctor}
+        />
+
+        <DeleteConfirmDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          itemName={selectedDoctor?.name}
+        />
       </Box>
     </Box>
   );

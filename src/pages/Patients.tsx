@@ -21,7 +21,10 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import DescriptionIcon from '@mui/icons-material/Description';
+import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import PatientDialog from '../components/patients/PatientDialog';
+import DeleteConfirmDialog from '../components/doctors/DeleteConfirmDialog';
 
 const mockPatients = [
   { id: 'BN001', name: 'Nguyễn Văn A', dob: '12/05/1985', gender: 'Nam', phone: '0901 234 567', lastVisit: '20/10/2023', status: 'Active' },
@@ -38,6 +41,35 @@ const mockPatients = [
 
 const Patients: React.FC = () => {
   const [page, setPage] = useState(1);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+
+  const handleAddPatient = () => {
+    setSelectedPatient(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditPatient = (patient: any) => {
+    setSelectedPatient(patient);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (patient: any) => {
+    setSelectedPatient(patient);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleSavePatient = (data: any) => {
+    console.log('Saving patient:', data);
+    // API call logic
+  };
+
+  const handleConfirmDelete = () => {
+    console.log('Deleting patient:', selectedPatient?.id);
+    // Delete logic
+    setDeleteDialogOpen(false);
+  };
   const pageSize = 5;
   const total = mockPatients.length;
   const pageCount = Math.ceil(total / pageSize);
@@ -55,6 +87,7 @@ const Patients: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
+            onClick={handleAddPatient}
             sx={{
               background: '#00A3FF',
               textTransform: 'none',
@@ -147,8 +180,12 @@ const Patients: React.FC = () => {
                   </TableCell>
                   <TableCell align="right">
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" sx={{ color: '#00A3FF' }}><DescriptionIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" sx={{ color: '#EF4444' }}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditPatient(patient)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(patient)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -174,6 +211,21 @@ const Patients: React.FC = () => {
             />
           </Box>
         </TableContainer>
+
+        {/* Dialogs */}
+        <PatientDialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          onSave={handleSavePatient}
+          patient={selectedPatient}
+        />
+
+        <DeleteConfirmDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+          itemName={`Bệnh nhân ${selectedPatient?.name}`}
+        />
       </Box>
     </Box>
   );
