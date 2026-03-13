@@ -3,9 +3,15 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 
 import { BrowserRouter } from "react-router-dom";
+import { NotificationProvider } from "./contexts/NotificationContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
-    <App />
+    <AuthProvider>
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
+    </AuthProvider>
   </BrowserRouter>
 );

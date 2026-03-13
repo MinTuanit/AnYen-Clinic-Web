@@ -27,9 +27,17 @@ const navItems = [
 ];
 
 
+import { useAuth } from '../contexts/AuthContext';
+
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const currentPath = window.location.pathname;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
   return (
     <Box
       sx={{
@@ -94,12 +102,17 @@ const Sidebar: React.FC = () => {
         alignItems: 'center',
         gap: 1.5
       }}>
-        <Avatar src="https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png" sx={{ width: 36, height: 36 }} />
+        <Avatar 
+          src={user?.avatar_url || "https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png"} 
+          sx={{ width: 36, height: 36 }} 
+        />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography fontWeight={600} fontSize={13} noWrap>Nguyễn Văn A</Typography>
-          <Typography fontSize={11} color="text.secondary">Quản trị viên</Typography>
+          <Typography fontWeight={600} fontSize={13} noWrap>{user?.name || 'Admin'}</Typography>
+          <Typography fontSize={11} color="text.secondary">
+            {user?.role_value === 'admin' ? 'Quản trị viên' : 'Nhân viên'}
+          </Typography>
         </Box>
-        <Button sx={{ minWidth: 0, p: 0.5, color: '#64748B' }} onClick={() => navigate('/login')}>
+        <Button sx={{ minWidth: 0, p: 0.5, color: '#64748B' }} onClick={handleLogout}>
           <LogoutIcon sx={{ fontSize: 18 }} />
         </Button>
       </Box>
