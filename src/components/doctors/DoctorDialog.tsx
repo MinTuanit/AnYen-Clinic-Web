@@ -21,10 +21,13 @@ import {
   Person,
   Work,
   Phone,
-  Lock,
+  Lock as LockIcon,
   HistoryEdu,
   AttachMoney,
-  LocationOn
+  LocationOn,
+  Verified,
+  CloudUpload,
+  DeleteOutline
 } from '@mui/icons-material';
 
 interface DoctorDialogProps {
@@ -43,12 +46,16 @@ interface DoctorFormData {
   specialization: string;
   workplace: string;
   year_experience: number;
-  price: number;
+  price: string | number;
   gender: string;
   approval_status: string;
   work_experience: string;
   education_history: string;
   avatar_url: string;
+  certification_urls: string[];
+  street?: string;
+  province_code?: string;
+  ward_code?: string;
 }
 
 const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doctor }) => {
@@ -62,12 +69,16 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
     specialization: '',
     workplace: '',
     year_experience: 0,
-    price: 0,
+    price: '',
     gender: 'Male',
     approval_status: 'Pending',
     work_experience: '',
     education_history: '',
-    avatar_url: 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png'
+    avatar_url: 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png',
+    certification_urls: [],
+    street: '',
+    province_code: '',
+    ward_code: ''
   });
 
   useEffect(() => {
@@ -76,19 +87,23 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
         const doc = doctor as any;
         setFormData({
           name: doc.user?.name || doc.name || '',
-          phone_number: doc.user?.phone_number || doc.phone_number || '',
+          phone_number: doc.user?.phone_number || doc.phone_number || doc.phone || '',
           password: '', // Don't populate password
           role_value: doc.role_value || 'doctor',
           active_status: doc.user?.active_status ?? doc.active_status ?? true,
           specialization: doc.specialization || '',
           workplace: doc.workplace || '',
-          year_experience: doc.year_experience || 0,
+          year_experience: doc.year_experience || doc.yearExperience || 0,
           price: doc.price || 0,
           gender: doc.gender || 'Male',
-          approval_status: doc.approval_status || 'Pending',
-          work_experience: doc.work_experience || '',
-          education_history: doc.education_history || '',
-          avatar_url: doc.user?.avatar_url || doc.avatar_url || 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png'
+          approval_status: doc.approval_status || doc.approvalStatus || 'Pending',
+          work_experience: doc.work_experience || doc.workExperience || '',
+          education_history: doc.education_history || doc.educationHistory || '',
+          avatar_url: doc.user?.avatar_url || doc.avatar_url || doc.avatarUrl || 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png',
+          certification_urls: doc.certification_urls || [],
+          street: doc.address?.street || '',
+          province_code: doc.address?.province_code || doc.address?.provinceCode || '',
+          ward_code: doc.address?.ward_code || doc.address?.wardCode || ''
         });
       } else {
         setFormData({
@@ -105,7 +120,11 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
           approval_status: 'Pending',
           work_experience: '',
           education_history: '',
-          avatar_url: 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png'
+          avatar_url: 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png',
+          certification_urls: [],
+          street: '',
+          province_code: '',
+          ward_code: ''
         });
       }
       setTabIndex(0); // Reset tab to first one when opening
@@ -147,6 +166,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
         <Tabs value={tabIndex} onChange={handleTabChange} sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 } }}>
           <Tab icon={<Person sx={{ fontSize: 20 }} />} iconPosition="start" label="Thông tin tài khoản" />
           <Tab icon={<Work sx={{ fontSize: 20 }} />} iconPosition="start" label="Thông tin chuyên môn" />
+          <Tab icon={<Verified sx={{ fontSize: 20 }} />} iconPosition="start" label="Chứng chỉ" />
         </Tabs>
       </Box>
 
@@ -229,7 +249,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
                 value={formData.password}
                 onChange={handleChange}
                 placeholder={doctor ? 'Để trống nếu không đổi' : 'Nhập mật khẩu'}
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><Lock sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+                slotProps={{ input: { startAdornment: <InputAdornment position="start"><LockIcon sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -364,7 +384,175 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
                 slotProps={{ input: { startAdornment: <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}><HistoryEdu sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
               />
             </Grid>
+            <Grid size={12}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+                Địa chỉ (Đường/Số nhà)
+              </Typography>
+              <TextField
+                fullWidth
+                name="street"
+                value={formData.street}
+                onChange={handleChange}
+                placeholder="VD: 23 Ngô Tất Tố"
+                slotProps={{ input: { startAdornment: <InputAdornment position="start"><LocationOn sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+                Mã Tỉnh/Thành phố
+              </Typography>
+              <TextField
+                fullWidth
+                name="province_code"
+                value={formData.province_code}
+                onChange={handleChange}
+                placeholder="VD: 79"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+                Mã Phường/Xã
+              </Typography>
+              <TextField
+                fullWidth
+                name="ward_code"
+                value={formData.ward_code}
+                onChange={handleChange}
+                placeholder="VD: 25760"
+              />
+            </Grid>
           </Grid>
+        )}
+        {tabIndex === 2 && (
+          <Box sx={{ minHeight: '300px' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', display: 'block' }}>
+                Danh sách chứng chỉ & bằng cấp ({formData.certification_urls.length})
+              </Typography>
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<CloudUpload />}
+                size="small"
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: '8px',
+                  borderColor: '#00A3FF',
+                  color: '#00A3FF',
+                  '&:hover': {
+                    borderColor: '#008BD9',
+                    bgcolor: '#E6F6FF'
+                  }
+                }}
+              >
+                Tải lên mới
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    const newUrls = files.map(file => URL.createObjectURL(file));
+                    setFormData(prev => ({
+                      ...prev,
+                      certification_urls: [...prev.certification_urls, ...newUrls]
+                    }));
+                  }}
+                />
+              </Button>
+            </Box>
+
+            <Grid container spacing={2}>
+              {/* Upload Placeholder Card */}
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <Box
+                  component="label"
+                  sx={{
+                    width: '100%',
+                    height: '200px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px dashed #E2E8F0',
+                    borderRadius: '12px',
+                    bgcolor: '#F8FAFC',
+                    cursor: 'pointer',
+                    transition: '0.2s',
+                    '&:hover': {
+                      borderColor: '#00A3FF',
+                      bgcolor: '#E6F6FF',
+                      '& .MuiSvgIcon-root': { color: '#00A3FF' }
+                    }
+                  }}
+                >
+                  <CloudUpload sx={{ fontSize: 32, color: '#94A3B8', mb: 1 }} />
+                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>Thêm chứng chỉ</Typography>
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      const newUrls = files.map(file => URL.createObjectURL(file));
+                      setFormData(prev => ({
+                        ...prev,
+                        certification_urls: [...prev.certification_urls, ...newUrls]
+                      }));
+                    }}
+                  />
+                </Box>
+              </Grid>
+
+              {formData.certification_urls.map((url, index) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                  <Box sx={{ position: 'relative', width: '100%', height: '200px', group: 'true' }}>
+                    <Box
+                      component="img"
+                      src={url}
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius: '12px',
+                        border: '2px solid #F1F5F9',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                        transition: '0.2s',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          transform: 'scale(1.02)'
+                        }
+                      }}
+                      onClick={() => window.open(url, '_blank')}
+                    />
+                    <IconButton
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        bgcolor: 'rgba(255, 255, 255, 0.9)',
+                        color: '#EF4444',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        '&:hover': { bgcolor: 'white' }
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData(prev => ({
+                          ...prev,
+                          certification_urls: prev.certification_urls.filter((_, i) => i !== index)
+                        }));
+                      }}
+                    >
+                      <DeleteOutline fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
         )}
       </DialogContent>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -14,7 +14,8 @@ import {
   IconButton,
   Pagination,
   TextField,
-  InputAdornment
+  InputAdornment,
+  CircularProgress
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -24,51 +25,100 @@ import Sidebar from '../components/Sidebar';
 import DoctorDialog from '../components/doctors/DoctorDialog';
 import DeleteConfirmDialog from '../components/doctors/DeleteConfirmDialog';
 import EditIcon from '@mui/icons-material/Edit';
-
-// Dữ liệu mẫu
-const mockDoctors = [
-  { id: '1', name: 'TS. Lê Minh', specialization: 'Tâm lý học Lâm sàng', year_experience: 15, status: 'Sẵn sàng' },
-  { id: '2', name: 'ThS. Nguyễn An', specialization: 'Tâm lý học Trẻ em', year_experience: 8, status: 'Sẵn sàng' },
-  { id: '3', name: 'BS. Phạm Hòa', specialization: 'Tham vấn Tâm thần', year_experience: 12, status: 'Nghỉ phép' },
-  { id: '4', name: 'TS. Lê Minh', specialization: 'Tâm lý học Lâm sàng', year_experience: 15, status: 'Sẵn sàng' },
-  { id: '5', name: 'ThS. Nguyễn An', specialization: 'Tâm lý học Trẻ em', year_experience: 8, status: 'Sẵn sàng' },
-  { id: '6', name: 'BS. Phạm Hòa', specialization: 'Tham vấn Tâm thần', year_experience: 12, status: 'Nghỉ phép' },
-];
+import { doctorService } from '../services/doctorService';
+import { Doctor } from '../types/doctor';
+import { useNotification } from '../contexts/NotificationContext';
 
 const Doctors: React.FC = () => {
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const { showNotification } = useNotification();
 
-  const pageSize = 5;
-  const total = mockDoctors.length;
+  const pageSize = 8;
+
+  const fetchDoctors = async () => {
+    try {
+      setLoading(true);
+      const data = await doctorService.getAllDoctors();
+      setDoctors(data);
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+      showNotification('Không thể lấy danh sách bác sĩ', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+
+  const filteredDoctors = doctors.filter(doctor =>
+    doctor.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const total = filteredDoctors.length;
   const pageCount = Math.ceil(total / pageSize);
-  const pagedDoctors = mockDoctors.slice((page - 1) * pageSize, page * pageSize);
+  const pagedDoctors = filteredDoctors.slice((page - 1) * pageSize, page * pageSize);
 
   const handleAddDoctor = () => {
     setSelectedDoctor(null);
     setDialogOpen(true);
   };
 
-  const handleEditDoctor = (doctor: any) => {
+  const handleEditDoctor = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
     setDialogOpen(true);
   };
 
-  const handleDeleteClick = (doctor: any) => {
+  const handleDeleteClick = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
     setDeleteDialogOpen(true);
   };
 
-  const handleSaveDoctor = (data: any) => {
-    console.log('Saving doctor:', data);
-    // Logic to update state or call API would go here
+  const handleSaveDoctor = async (data: any) => {
+    try {
+      if (selectedDoctor) {
+        // Edit mode
+        await doctorService.editDoctor({
+          ...selectedDoctor,
+          ...data,
+          doctor_id: selectedDoctor.doctor_id,
+          gender: data.gender, // Service handles mapping
+        });
+        showNotification('Cập nhật thông tin bác sĩ thành công!');
+      } else {
+        // Create mode
+        await doctorService.createDoctor({
+          ...data,
+          info_status: 'Active'
+        });
+        showNotification('Thêm bác sĩ thành công!');
+      }
+      fetchDoctors();
+      setDialogOpen(false);
+    } catch (error) {
+      console.error('Error saving doctor:', error);
+      showNotification('Có lỗi xảy ra khi lưu thông tin bác sĩ', 'error');
+    }
   };
 
-  const handleConfirmDelete = () => {
-    console.log('Deleting doctor:', selectedDoctor?.id);
-    // Logic to delete would go here
+  const handleConfirmDelete = async () => {
+    if (!selectedDoctor) return;
+    try {
+      console.log('Deleting doctor:', selectedDoctor.doctor_id);
+      showNotification('Chức năng xóa sẽ được cập nhật sau. Hiện tại chưa có API xóa bác sĩ.', 'info');
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting doctor:', error);
+      showNotification('Có lỗi xảy ra khi xóa bác sĩ', 'error');
+    }
   };
 
   return (
@@ -104,6 +154,8 @@ const Doctors: React.FC = () => {
             fullWidth
             placeholder="Tìm kiếm bác sĩ theo tên hoặc chuyên ngành..."
             size="small"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
               '& .MuiOutlinedInput-root': {
                 background: '#fff',
@@ -139,7 +191,12 @@ const Doctors: React.FC = () => {
         </Box>
 
         {/* Doctors Table */}
-        <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden' }}>
+        <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden', position: 'relative', minHeight: '400px' }}>
+          {loading && (
+            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(255,255,255,0.7)', zIndex: 1 }}>
+              <CircularProgress size={40} sx={{ color: '#00A3FF' }} />
+            </Box>
+          )}
           <Table>
             <TableHead sx={{ background: '#F8FAFC' }}>
               <TableRow>
@@ -151,18 +208,18 @@ const Doctors: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {pagedDoctors.map((doctor) => (
-                <TableRow key={doctor.id} sx={{ '&:hover': { background: '#F1F5F9' }, transition: '0.2s' }}>
-                  <TableCell sx={{ fontWeight: 700, color: '#1E293B' }}>{doctor.name}</TableCell>
+              {pagedDoctors.length > 0 ? pagedDoctors.map((doctor) => (
+                <TableRow key={doctor.doctor_id} sx={{ '&:hover': { background: '#F1F5F9' }, transition: '0.2s' }}>
+                  <TableCell sx={{ fontWeight: 700, color: '#1E293B' }}>{doctor.user.name}</TableCell>
                   <TableCell sx={{ color: '#475569' }}>{doctor.specialization}</TableCell>
                   <TableCell sx={{ color: '#475569' }}>{doctor.year_experience} năm</TableCell>
                   <TableCell>
                     <Chip
-                      label={doctor.status}
+                      label={doctor.approval_status || (doctor.user.active_status ? 'Hoạt động' : 'Bị khóa')}
                       size="small"
                       sx={{
-                        background: doctor.status === 'Sẵn sàng' ? '#E6F6FF' : '#FFF1F2',
-                        color: doctor.status === 'Sẵn sàng' ? '#00A3FF' : '#E11D48',
+                        background: (doctor.approval_status === 'Approved' || doctor.user.active_status === true) ? '#E6F6FF' : '#FFF1F2',
+                        color: (doctor.approval_status === 'Approved' || doctor.user.active_status === true) ? '#00A3FF' : '#E11D48',
                         fontWeight: 600,
                         fontSize: '0.75rem',
                         borderRadius: '6px'
@@ -188,27 +245,35 @@ const Doctors: React.FC = () => {
                     </Box>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : !loading && (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8, color: '#64748B' }}>
+                    Không tìm thấy bác sĩ nào.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
 
           {/* Pagination */}
-          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0' }}>
-            <Typography variant="body2" color="text.secondary">
-              Hiển thị {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, total)} trong số {total} bác sĩ
-            </Typography>
-            <Pagination
-              count={pageCount}
-              page={page}
-              onChange={(_, value) => setPage(value)}
-              shape="rounded"
-              color="primary"
-              size="small"
-              sx={{
-                '& .Mui-selected': { background: '#00A3FF !important' }
-              }}
-            />
-          </Box>
+          {total > 0 && (
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0' }}>
+              <Typography variant="body2" color="text.secondary">
+                Hiển thị {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, total)} trong số {total} bác sĩ
+              </Typography>
+              <Pagination
+                count={pageCount}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                shape="rounded"
+                color="primary"
+                size="small"
+                sx={{
+                  '& .Mui-selected': { background: '#00A3FF !important' }
+                }}
+              />
+            </Box>
+          )}
         </TableContainer>
 
         {/* Dialogs */}
@@ -216,14 +281,14 @@ const Doctors: React.FC = () => {
           open={dialogOpen}
           onClose={() => setDialogOpen(false)}
           onSave={handleSaveDoctor}
-          doctor={selectedDoctor}
+          doctor={selectedDoctor as any}
         />
 
         <DeleteConfirmDialog
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
           onConfirm={handleConfirmDelete}
-          itemName={selectedDoctor?.name}
+          itemName={selectedDoctor?.user.name}
         />
       </Box>
     </Box>
