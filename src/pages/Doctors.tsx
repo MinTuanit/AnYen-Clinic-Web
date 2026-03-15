@@ -112,12 +112,20 @@ const Doctors: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (!selectedDoctor) return;
     try {
-      console.log('Deleting doctor:', selectedDoctor.doctor_id);
-      showNotification('Chức năng xóa sẽ được cập nhật sau. Hiện tại chưa có API xóa bác sĩ.', 'info');
+      setLoading(true);
+      const res = await doctorService.deleteDoctor(selectedDoctor.doctor_id);
+      if (res.data.err === 0) {
+        showNotification('Xóa bác sĩ thành công!');
+        fetchDoctors();
+      } else {
+        showNotification(res.data.mes || 'Không thể xóa bác sĩ', 'error');
+      }
       setDeleteDialogOpen(false);
     } catch (error) {
       console.error('Error deleting doctor:', error);
       showNotification('Có lỗi xảy ra khi xóa bác sĩ', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 

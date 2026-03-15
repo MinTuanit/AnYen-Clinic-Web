@@ -23,45 +23,60 @@ export const doctorService = {
   },
 
   createDoctor: async (doctor: any) => {
-    return apiClient.post('/admin/create-doctor', {
-      phone: doctor.phone || doctor.phone_number,
-      name: doctor.name,
+    // Step 1: Register Account
+    const regRes = await apiClient.post('/doctor/register', {
+      phone_number: doctor.phone || doctor.phone_number,
       password: doctor.password,
-      gender: doctor.gender === 'Nữ' || doctor.gender === 'Female' ? 'Female' : 'Male',
+    });
+
+    if (regRes.data.err !== 0) return regRes;
+
+    const doctorId = regRes.data.data.id;
+
+    // Step 2: Add Doctor Details
+    return apiClient.post('/doctor/add-doctor', {
+      doctor_id: doctorId,
+      name: doctor.name,
+      gender: doctor.gender,
       specialization: doctor.specialization,
       workplace: doctor.workplace,
-      year_experience: Number(doctor.year_experience || doctor.yearExperience),
-      work_experience: doctor.work_experience || doctor.workExperience,
-      info_status: doctor.info_status || doctor.infoStatus || 'Active',
-      education_history: doctor.education_history || doctor.educationHistory,
+      yearExperience: Number(doctor.year_experience || doctor.yearExperience),
+      workExperience: doctor.work_experience || doctor.workExperience,
+      infoStatus: doctor.info_status || doctor.infoStatus || 'Active',
+      educationHistory: doctor.education_history || doctor.educationHistory,
       price: String(doctor.price),
       province_code: doctor.address?.province_code || doctor.province_code,
       ward_code: doctor.address?.ward_code || doctor.ward_code,
       street: doctor.address?.street || doctor.street,
-      certification_urls: doctor.certification_urls || []
     });
   },
 
   editDoctor: async (doctor: any) => {
     const docId = doctor.doctor_id || doctor.doctorId;
-    return apiClient.patch('/admin/edit-doctor', {
+    return apiClient.patch('/doctor/edit-doctor', {
       user_id: docId,
       phone: doctor.phone || doctor.user?.phone_number || doctor.phone_number,
       name: doctor.name || doctor.user?.name,
       password: doctor.password || undefined,
-      gender: doctor.gender === 'Nữ' || doctor.gender === 'Female' ? 'Female' : 'Male',
+      gender: doctor.gender,
       specialization: doctor.specialization,
       workplace: doctor.workplace,
-      year_experience: Number(doctor.year_experience || doctor.yearExperience),
-      work_experience: doctor.work_experience || doctor.workExperience,
-      info_status: doctor.info_status || doctor.infoStatus,
-      education_history: doctor.education_history || doctor.educationHistory,
+      yearExperience: Number(doctor.year_experience || doctor.yearExperience),
+      workExperience: doctor.work_experience || doctor.workExperience,
+      infoStatus: doctor.info_status || doctor.infoStatus,
+      educationHistory: doctor.education_history || doctor.educationHistory,
       price: String(doctor.price),
       approval_status: doctor.approval_status || doctor.approvalStatus,
       province_code: doctor.address?.province_code || doctor.address?.provinceCode || doctor.province_code,
       ward_code: doctor.address?.ward_code || doctor.address?.wardCode || doctor.ward_code,
       street: doctor.address?.street || doctor.street,
       certification_urls: doctor.certification_urls || []
+    });
+  },
+
+  deleteDoctor: async (doctorId: string) => {
+    return apiClient.delete(`/admin/delete-doctor`, {
+      data: { user_id: doctorId }
     });
   },
 

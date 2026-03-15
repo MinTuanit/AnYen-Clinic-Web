@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import {
   Box,
@@ -15,35 +15,42 @@ import {
   Chip,
   IconButton,
   Pagination,
-  Paper
+  Paper,
+  CircularProgress
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import DescriptionIcon from '@mui/icons-material/Description';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PatientDialog from '../components/patients/PatientDialog';
 import DeleteConfirmDialog from '../components/doctors/DeleteConfirmDialog';
-
-const mockPatients = [
-  { id: 'BN001', name: 'Nguyễn Văn A', dob: '12/05/1985', gender: 'Nam', phone: '0901 234 567', lastVisit: '20/10/2023', status: 'Active' },
-  { id: 'BN002', name: 'Trần Thị B', dob: '22/08/1992', gender: 'Nữ', phone: '0912 345 678', lastVisit: '15/10/2023', status: 'Active' },
-  { id: 'BN003', name: 'Lê Văn C', dob: '05/02/1978', gender: 'Nam', phone: '0987 654 321', lastVisit: '01/09/2023', status: 'Inactive' },
-  { id: 'BN004', name: 'Phạm Minh D', dob: '30/11/2000', gender: 'Nam', phone: '0933 445 566', lastVisit: '18/10/2023', status: 'Active' },
-  { id: 'BN005', name: 'Hoàng Thị E', dob: '14/07/1988', gender: 'Nữ', phone: '0944 556 677', lastVisit: '05/10/2023', status: 'Active' },
-  { id: 'BN006', name: 'Nguyễn Văn A', dob: '12/05/1985', gender: 'Nam', phone: '0901 234 567', lastVisit: '20/10/2023', status: 'Active' },
-  { id: 'BN007', name: 'Trần Thị B', dob: '22/08/1992', gender: 'Nữ', phone: '0912 345 678', lastVisit: '15/10/2023', status: 'Active' },
-  { id: 'BN008', name: 'Lê Văn C', dob: '05/02/1978', gender: 'Nam', phone: '0987 654 321', lastVisit: '01/09/2023', status: 'Inactive' },
-  { id: 'BN009', name: 'Phạm Minh D', dob: '30/11/2000', gender: 'Nam', phone: '0933 445 566', lastVisit: '18/10/2023', status: 'Active' },
-  { id: 'BN010', name: 'Hoàng Thị E', dob: '14/07/1988', gender: 'Nữ', phone: '0944 556 677', lastVisit: '05/10/2023', status: 'Active' },
-];
+import { patientService } from '../services/patientService';
 
 const Patients: React.FC = () => {
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [patients, setPatients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  const fetchPatients = async () => {
+    try {
+      setLoading(true);
+      const data = await patientService.getAllPatients();
+      setPatients(data); // Không format ở đây!
+    } catch (error) {
+      console.error('Failed to fetch patients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddPatient = () => {
     setSelectedPatient(null);
@@ -71,9 +78,21 @@ const Patients: React.FC = () => {
     setDeleteDialogOpen(false);
   };
   const pageSize = 5;
-  const total = mockPatients.length;
+
+  const filteredPatients = patients.filter(p => {
+    const name = p.user?.name || p.anonymous_name || '';
+    const id = p.patient_id || '';
+    const phone = p.user?.phone_number || '';
+    return (
+      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      phone.includes(searchTerm)
+    );
+  });
+
+  const total = filteredPatients.length;
   const pageCount = Math.ceil(total / pageSize);
-  const pagedPatients = mockPatients.slice((page - 1) * pageSize, page * pageSize);
+  const pagedPatients = filteredPatients.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC' }}>
@@ -107,6 +126,11 @@ const Patients: React.FC = () => {
             fullWidth
             placeholder="Tìm kiếm bệnh nhân theo tên, ID hoặc số điện thoại..."
             size="small"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
             sx={{
               '& .MuiOutlinedInput-root': {
                 background: '#fff',
@@ -157,21 +181,37 @@ const Patients: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {pagedPatients.map((patient) => (
-                <TableRow key={patient.id} sx={{ '&:hover': { background: '#F1F5F9' }, transition: '0.2s' }}>
-                  <TableCell sx={{ color: '#00A3FF', fontWeight: 600 }}>{patient.id}</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#1E293B' }}>{patient.name}</TableCell>
-                  <TableCell sx={{ color: '#475569' }}>{patient.dob}</TableCell>
-                  <TableCell sx={{ color: '#475569' }}>{patient.gender}</TableCell>
-                  <TableCell sx={{ color: '#475569' }}>{patient.phone}</TableCell>
-                  <TableCell sx={{ color: '#475569' }}>{patient.lastVisit}</TableCell>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : pagedPatients.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                    <Typography color="text.secondary">Không tìm thấy bệnh nhân nào</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : pagedPatients.map((row) => (
+                <TableRow key={row.patient_id}>
+                  <TableCell>{row.patient_id}</TableCell>
+                  <TableCell>{row.user?.name || row.anonymous_name || 'Chưa cập nhật'}</TableCell>
+                  <TableCell>{row.date_of_birth ? new Date(row.date_of_birth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</TableCell>
+                  <TableCell>{row.gender === 'Male' ? 'Nam' : row.gender === 'Female' ? 'Nữ' : 'Khác'}</TableCell>
+                  <TableCell>{row.user?.phone_number || 'Chưa cập nhật'}</TableCell>
+                  <TableCell>
+                    {row.appointments?.length
+                      ? new Date(Math.max(...row.appointments.map((a: any) => new Date(a.appointment_date).getTime()))).toLocaleDateString('vi-VN')
+                      : 'Chưa khám'}
+                  </TableCell>
                   <TableCell>
                     <Chip
-                      label={patient.status}
+                      label={row.user?.active_status ? 'Active' : 'Inactive'}
                       size="small"
                       sx={{
-                        background: patient.status === 'Active' ? '#E6F6FF' : '#F1F5F9',
-                        color: patient.status === 'Active' ? '#00A3FF' : '#64748B',
+                        background: row.user?.active_status ? '#E6F6FF' : '#F1F5F9',
+                        color: row.user?.active_status ? '#00A3FF' : '#64748B',
                         fontWeight: 600,
                         fontSize: '0.75rem',
                         borderRadius: '6px'
@@ -180,10 +220,10 @@ const Patients: React.FC = () => {
                   </TableCell>
                   <TableCell align="right">
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditPatient(patient)}>
+                      <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditPatient(row)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(patient)}>
+                      <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(row)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Box>

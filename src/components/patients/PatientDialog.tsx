@@ -26,7 +26,6 @@ import {
   Fingerprint,
   History,
   Warning,
-  ContactPhone,
   Email
 } from '@mui/icons-material';
 
@@ -71,42 +70,44 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
   });
 
   useEffect(() => {
-    if (open) {
-      if (patient) {
-        const p = patient as any;
-        setFormData({
-          id: p.id || p.patient_id,
-          name: p.user?.name || p.name || '',
-          phone_number: p.user?.phone_number || p.phone || '',
-          active_status: p.user?.active_status ?? true,
-          avatar_url: p.avatar_url || p.user?.avatar_url || 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png',
-          date_of_birth: p.date_of_birth || p.dob || '',
-          gender: p.gender || 'Male',
-          anonymous_name: p.anonymous_name || '',
-          medical_history: p.medical_history || '',
-          allergies: p.allergies || '',
-          emergency_contact: p.emergency_contact || '',
-          email: p.email || ''
-        });
-      } else {
-        setFormData({
-          name: '',
-          phone_number: '',
-          password: '',
-          active_status: true,
-          avatar_url: 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png',
-          date_of_birth: '',
-          gender: 'Male',
-          anonymous_name: '',
-          medical_history: '',
-          allergies: '',
-          emergency_contact: '',
-          email: ''
-        });
-      }
+    if (!open) return;
+    if (!patient) {
+      setFormData({
+        name: '',
+        phone_number: '',
+        password: '',
+        active_status: true,
+        avatar_url: 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png',
+        date_of_birth: '',
+        gender: 'Male',
+        anonymous_name: '',
+        medical_history: '',
+        allergies: '',
+        emergency_contact: '',
+        email: ''
+      }); // default
+      setTabIndex(0);
+      return;
+    }
+    // Chỉ setFormData nếu patient.id khác với formData.id (hoặc so sánh sâu hơn nếu cần)
+    if (patient.patient_id !== formData.id) {
+      setFormData({
+        id: patient.id || patient.patient_id,
+        name: patient.user?.name || patient.name || '',
+        phone_number: patient.user?.phone_number || patient.phone || '',
+        active_status: patient.user?.active_status ?? true,
+        avatar_url: patient.user?.avatar_url || patient.avatar_url || 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png',
+        date_of_birth: patient.date_of_birth || patient.dob || '',
+        gender: patient.gender || 'Male',
+        anonymous_name: patient.anonymous_name || '',
+        medical_history: patient.medical_history || '',
+        allergies: patient.allergies || '',
+        emergency_contact: patient.emergency_contact || '',
+        email: patient.email || patient.user?.email || ''
+      });
       setTabIndex(0);
     }
-  }, [patient, open]);
+  }, [open, patient]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -309,20 +310,6 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
         {/* Tab 2: Medical Info */}
         {tabIndex === 2 && (
           <Grid container spacing={3}>
-            <Grid size={12}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
-                Liên hệ khẩn cấp
-              </Typography>
-              <TextField
-                fullWidth
-                name="emergency_contact"
-                value={formData.emergency_contact}
-                onChange={handleChange}
-                placeholder="Tên - SĐT người thân..."
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><ContactPhone sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
-              />
-            </Grid>
-
             <Grid size={12}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
                 Tiền sử bệnh lý
