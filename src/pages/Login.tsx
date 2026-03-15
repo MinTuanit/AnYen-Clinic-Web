@@ -4,29 +4,39 @@ import {
   Button,
   TextField,
   Typography,
-  Paper,
-  InputAdornment,
   IconButton,
   CircularProgress,
-  Container
+  Container,
+  Select,
+  MenuItem,
+  Link
 } from '@mui/material';
 import {
   Phone,
   Lock,
   Visibility,
-  VisibilityOff,
-  HealthAndSafety
+  VisibilityOff
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 
+const countries = [
+  { code: '+84', flag: 'https://flagcdn.com/w20/vn.png', name: 'VN' },
+  { code: '+1', flag: 'https://flagcdn.com/w20/us.png', name: 'US' },
+  { code: '+44', flag: 'https://flagcdn.com/w20/gb.png', name: 'UK' },
+  { code: '+33', flag: 'https://flagcdn.com/w20/fr.png', name: 'FR' },
+  { code: '+49', flag: 'https://flagcdn.com/w20/de.png', name: 'DE' },
+];
+
 const Login: React.FC = () => {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneInput, setPhoneInput] = useState('');
+  const [countryCode, setCountryCode] = useState('+84');
+  const phoneNumber = countryCode + phoneInput;
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const { login } = useAuth();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
@@ -58,134 +68,152 @@ const Login: React.FC = () => {
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
-        background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: '-10%',
-          right: '-5%',
-          width: '500px',
-          height: '500px',
-          background: 'radial-gradient(circle, rgba(0, 163, 255, 0.08) 0%, transparent 70%)',
-          borderRadius: '50%',
-        },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          bottom: '-10%',
-          left: '-5%',
-          width: '400px',
-          height: '400px',
-          background: 'radial-gradient(circle, rgba(0, 163, 255, 0.05) 0%, transparent 70%)',
-          borderRadius: '50%',
-        }
+        justifyContent: 'center',
+        bgcolor: '#fff',
       }}
     >
-      <Container maxWidth="sm">
-        <Paper
-          elevation={0}
+      <Container maxWidth="xs" sx={{ px: 2 }}>
+        <Box
           sx={{
-            p: 5,
-            borderRadius: '24px',
-            bgcolor: 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
+            bgcolor: '#fff',
+            borderRadius: 4,
+            boxShadow: '0 4px 24px 0 rgba(60,72,100,0.10)',
+            px: { xs: 2, sm: 4 },
+            py: { xs: 3, sm: 5 },
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center'
+            alignItems: 'center',
+            width: '100%',
+            maxWidth: 420,
+            mx: 'auto',
           }}
         >
-          {/* Logo / Icon */}
-          <Box
-            sx={{
-              width: 80,
-              height: 80,
-              borderRadius: '20px',
-              bgcolor: '#00A3FF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 3,
-              boxShadow: '0 10px 15px -3px rgba(0, 163, 255, 0.3)'
-            }}
-          >
-            <HealthAndSafety sx={{ fontSize: 48, color: 'white' }} />
-          </Box>
-
           <Typography
             variant="h4"
-            fontWeight={800}
-            sx={{ color: '#1E293B', mb: 1, textAlign: 'center' }}
+            fontWeight={700}
+            sx={{ color: '#2DA0E8', mb: 5, textAlign: 'center' }}
           >
-            Chào mừng trở lại
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{ color: '#64748B', mb: 4, textAlign: 'center' }}
-          >
-            Hệ thống quản lý phòng khám An Yên
+            Đăng nhập
           </Typography>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569', mb: 1 }}>
-                Số điện thoại
-              </Typography>
+            {/* Phone Input */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                border: '1px solid #B0BEC5',
+                borderRadius: '4px',
+                height: 52,
+                mb: 2.5,
+                px: 1.5,
+              }}
+            >
+              <Phone sx={{ color: '#90CAF9', mr: 1, fontSize: 26 }} />
+
+              <Select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                variant="standard"
+                disableUnderline
+                renderValue={(value) => {
+                  const country = countries.find(c => c.code === value) || countries[0];
+                  return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                      <img src={country.flag} alt={country.name} style={{ width: 22, height: 15, borderRadius: 2 }} />
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{country.code}</Typography>
+                    </Box>
+                  );
+                }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mr: 1.5,
+                  '.MuiSelect-select': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    paddingRight: '22px !important',
+                    gap: 0.5,
+                  },
+                }}
+              >
+                {countries.map((country) => (
+                  <MenuItem key={country.code} value={country.code} sx={{ display: 'flex', gap: 1.5 }}>
+                    <img src={country.flag} alt={country.name} style={{ width: 22, height: 15, borderRadius: 2 }} />
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>{country.code}</Typography>
+                  </MenuItem>
+                ))}
+              </Select>
+
               <TextField
                 fullWidth
-                placeholder="Nhập số điện thoại của bạn"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Phone sx={{ color: '#94A3B8' }} />
-                      </InputAdornment>
-                    ),
-                    sx: { borderRadius: '12px', bgcolor: '#fff' }
-                  }
+                placeholder="Nhập số điện thoại"
+                value={phoneInput}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  setPhoneInput(value);
+                }}
+                variant="standard"
+                InputProps={{
+                  disableUnderline: true,
+                  sx: { fontSize: '1rem', color: '#475569', '&::placeholder': { color: '#90CAF9' } }
                 }}
               />
             </Box>
 
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569', mb: 1 }}>
-                Mật khẩu
-              </Typography>
+            {/* Password Input */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                border: '1px solid #B0BEC5',
+                borderRadius: '4px',
+                height: 52,
+                mb: 1.5,
+                px: 1.5,
+              }}
+            >
+              <Lock sx={{ color: '#9E9E9E', mr: 1.5, fontSize: 26 }} />
               <TextField
                 fullWidth
                 type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
+                placeholder="Nhập mật khẩu"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Lock sx={{ color: '#94A3B8' }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                          size="small"
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                    sx: { borderRadius: '12px', bgcolor: '#fff' }
-                  }
+                variant="standard"
+                InputProps={{
+                  disableUnderline: true,
+                  sx: { fontSize: '1rem', color: '#475569' }
                 }}
               />
+              <IconButton
+                onClick={() => setShowPassword(!showPassword)}
+                edge="end"
+                size="small"
+                sx={{ color: '#9E9E9E' }}
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
             </Box>
 
+            {/* Forgot Password */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
+              <Link
+                href="#"
+                underline="none"
+                onClick={(e) => e.preventDefault()}
+                sx={{
+                  color: '#2CA0E6',
+                  fontSize: '0.95rem',
+                  fontWeight: 400,
+                  fontStyle: 'italic'
+                }}
+              >
+                Quên mật khẩu
+              </Link>
+            </Box>
+
+            {/* Submit Button */}
             <Button
               fullWidth
               variant="contained"
@@ -193,36 +221,42 @@ const Login: React.FC = () => {
               disabled={isSubmitting}
               sx={{
                 py: 1.5,
-                borderRadius: '12px',
-                bgcolor: '#00A3FF',
-                fontSize: '1rem',
-                fontWeight: 700,
+                borderRadius: '4px',
+                bgcolor: '#2CA0E6',
+                fontSize: '1.1rem',
+                fontWeight: 600,
                 textTransform: 'none',
-                boxShadow: '0 4px 6px -1px rgba(0, 163, 255, 0.4)',
+                mb: 2,
+                boxShadow: 'none',
                 '&:hover': {
-                  bgcolor: '#008BD9',
-                  boxShadow: '0 10px 15px -3px rgba(0, 163, 255, 0.4)',
+                  bgcolor: '#228ED0',
+                  boxShadow: 'none',
                 },
-                '&.Mui-disabled': {
-                  bgcolor: '#93C5FD',
-                  color: '#fff'
-                }
               }}
             >
               {isSubmitting ? (
                 <CircularProgress size={24} color="inherit" />
               ) : (
-                'Đăng nhập ngay'
+                'Đăng nhập'
               )}
             </Button>
-          </Box>
 
-          <Box sx={{ mt: 4, textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ color: '#94A3B8' }}>
-              Bản quyền © 2026 An Yên Clinic.
-            </Typography>
+            {/* Sign Up Link */}
+            <Box sx={{ textAlign: 'center', mt: 1 }}>
+              <Typography variant="body1" sx={{ color: '#9E9E9E', fontStyle: 'italic' }}>
+                Chưa có tài khoản?{' '}
+                <Link
+                  href="#"
+                  underline="none"
+                  onClick={(e) => e.preventDefault()}
+                  sx={{ color: '#2CA0E6', fontWeight: 400, fontStyle: 'italic' }}
+                >
+                  Đăng ký
+                </Link>
+              </Typography>
+            </Box>
           </Box>
-        </Paper>
+        </Box>
       </Container>
     </Box>
   );
