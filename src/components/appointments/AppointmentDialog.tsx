@@ -21,82 +21,93 @@ import {
   AttachMoney,
   Badge
 } from '@mui/icons-material';
+import { doctorService } from '../../services/doctorService';
+import { patientService } from '../../services/patientService';
+import { Appointment } from '../../types/appointment';
+import { Patient } from '../../types/patient';
+import { Doctor } from '../../types/doctor';
 
 interface AppointmentDialogProps {
   open: boolean;
   onClose: () => void;
   onSave: (data: AppointmentFormData) => void;
-  appointment?: any; // If provided, we are in Edit mode
+  appointment?: Appointment | null; // If provided, we are in Edit mode
 }
 
 export interface AppointmentFormData {
   id?: string;
   patient_id: string;
   doctor_id: string;
-  appointment_date: string;
-  appointment_time: string;
+  appointmentDate: string;
+  appointmentTime: string;
   question: string;
-  status: 'Unpaid' | 'Pending' | 'Confirmed' | 'Completed' | 'Canceled';
+  status: string;
   description: string;
-  note_for_admin: string;
-  commission_rate: number;
-  doctor_payment_status: 'Unpaid' | 'Paid';
+  noteForAdmin: string;
+  commissionRate: number;
+  doctorPaymentStatus: string;
 }
 
-const mockPatients = [
-  { id: 'p1', name: 'Nguyễn Văn An' },
-  { id: 'p2', name: 'Lê Thị Bình' },
-  { id: 'p3', name: 'Phạm Hồng Cường' },
-];
-
-const mockDoctors = [
-  { id: 'd1', name: 'BS. Trần Thu Hà' },
-  { id: 'd2', name: 'BS. Nguyễn Minh Tuấn' },
-  { id: 'd3', name: 'BS. Lê Thị Mai' },
-];
-
 const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, onSave, appointment }) => {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [formData, setFormData] = useState<AppointmentFormData>({
     patient_id: '',
     doctor_id: '',
-    appointment_date: new Date().toISOString().split('T')[0],
-    appointment_time: '08:00',
+    appointmentDate: new Date().toISOString().split('T')[0],
+    appointmentTime: '08:00',
     question: '',
     status: 'Pending',
     description: '',
-    note_for_admin: '',
-    commission_rate: 0.2,
-    doctor_payment_status: 'Unpaid'
+    noteForAdmin: '',
+    commissionRate: 0.2,
+    doctorPaymentStatus: 'Unpaid'
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [patientsData, doctorsData] = await Promise.all([
+          patientService.getAllPatients(),
+          doctorService.getAllDoctors()
+        ]);
+        setPatients(patientsData || []);
+        setDoctors(doctorsData || []);
+      } catch (error) {
+        console.error('Error fetching patients or doctors:', error);
+      }
+    };
+    if (open) fetchData();
+  }, [open]);
 
   useEffect(() => {
     if (open) {
       if (appointment) {
         setFormData({
           id: appointment.id,
-          patient_id: appointment.patient_id || '',
-          doctor_id: appointment.doctor_id || '',
-          appointment_date: appointment.appointment_date || '',
-          appointment_time: appointment.appointment_time || '',
+          patient_id: appointment.patient?.patient_id || appointment.patient?.patientId || '',
+          doctor_id: appointment.doctor?.doctor_id || '',
+          appointmentDate: appointment.appointmentDate || '',
+          appointmentTime: appointment.appointmentTime || '',
           question: appointment.question || '',
           status: appointment.status || 'Pending',
           description: appointment.description || '',
-          note_for_admin: appointment.note_for_admin || '',
-          commission_rate: appointment.commission_rate || 0.2,
-          doctor_payment_status: appointment.doctor_payment_status || 'Unpaid'
+          noteForAdmin: appointment.noteForAdmin || '',
+          commissionRate: appointment.commissionRate || 0.2,
+          doctorPaymentStatus: appointment.doctorPaymentStatus || 'Unpaid'
         });
       } else {
         setFormData({
           patient_id: '',
           doctor_id: '',
-          appointment_date: new Date().toISOString().split('T')[0],
-          appointment_time: '08:00',
+          appointmentDate: new Date().toISOString().split('T')[0],
+          appointmentTime: '08:00',
           question: '',
           status: 'Pending',
           description: '',
-          note_for_admin: '',
-          commission_rate: 0.2,
-          doctor_payment_status: 'Unpaid'
+          noteForAdmin: '',
+          commissionRate: 0.2,
+          doctorPaymentStatus: 'Unpaid'
         });
       }
     }
@@ -144,8 +155,10 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
               onChange={handleChange}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><Person sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             >
-              {mockPatients.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+              {patients.map((p) => (
+                <MenuItem key={p.patient_id || p.patientId} value={p.patient_id || p.patientId}>
+                  {p.user?.name || p.name || p.anonymous_name || 'Chưa cập nhật'}
+                </MenuItem>
               ))}
             </TextField>
           </Grid>
@@ -163,8 +176,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
               onChange={handleChange}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><Psychology sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             >
-              {mockDoctors.map((d) => (
-                <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+              {doctors.map((d) => (
+                <MenuItem key={d.doctor_id} value={d.doctor_id}>{d.user?.name}</MenuItem>
               ))}
             </TextField>
           </Grid>
@@ -177,8 +190,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
             <TextField
               fullWidth
               type="date"
-              name="appointment_date"
-              value={formData.appointment_date}
+              name="appointmentDate"
+              value={formData.appointmentDate}
               onChange={handleChange}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><CalendarToday sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             />
@@ -191,8 +204,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
             <TextField
               fullWidth
               type="time"
-              name="appointment_time"
-              value={formData.appointment_time}
+              name="appointmentTime"
+              value={formData.appointmentTime}
               onChange={handleChange}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><AccessTime sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             />
@@ -241,8 +254,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
             <TextField
               fullWidth
               type="number"
-              name="commission_rate"
-              value={formData.commission_rate}
+              name="commissionRate"
+              value={formData.commissionRate}
               onChange={handleChange}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
               inputProps={{ step: 0.1, min: 0, max: 1 }}
@@ -257,8 +270,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
             <TextField
               select
               fullWidth
-              name="doctor_payment_status"
-              value={formData.doctor_payment_status}
+              name="doctorPaymentStatus"
+              value={formData.doctorPaymentStatus}
               onChange={handleChange}
             >
               <MenuItem value="Unpaid">Chưa trả (Unpaid)</MenuItem>
@@ -290,8 +303,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
               fullWidth
               multiline
               rows={2}
-              name="note_for_admin"
-              value={formData.note_for_admin}
+              name="noteForAdmin"
+              value={formData.noteForAdmin}
               onChange={handleChange}
               placeholder="Thông tin nội bộ..."
               slotProps={{ input: { startAdornment: <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}><Notes sx={{ color: '#94A3B8' }} /></InputAdornment> } }}

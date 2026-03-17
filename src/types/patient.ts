@@ -9,11 +9,21 @@ export interface HealthRecord {
 }
 
 export interface Patient {
-  patientId?: string;
+  patient_id?: string;
+  patientId?: string; // Keep for backward compatibility if needed
   name?: string;
+  user?: {
+    id: string;
+    name: string;
+    phone_number: string;
+    avatar_url?: string;
+    active_status?: boolean;
+  };
   phoneNumber?: string;
   avatarUrl?: string;
+  anonymous_name?: string;
   anonymousName?: string;
+  date_of_birth?: string;
   dateOfBirth?: string;
   gender: string;
   medicalHistory: string;

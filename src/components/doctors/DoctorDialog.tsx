@@ -133,10 +133,16 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? (value === '' ? 0 : Number(value)) : value
-    }));
+    if (type === 'number') {
+      const cleanedValue = value.replace(/^0+/, '');
+      const numValue = cleanedValue === '' ? 0 : Number(cleanedValue);
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: numValue < 0 ? 0 : numValue 
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -307,6 +313,8 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
                 name="year_experience"
                 value={formData.year_experience}
                 onChange={handleChange}
+                onFocus={(e) => e.target.select()}
+                slotProps={{ htmlInput: { min: 0 } }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -319,7 +327,11 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+                onFocus={(e) => e.target.select()}
+                slotProps={{ 
+                  input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> },
+                  htmlInput: { min: 0 }
+                }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>

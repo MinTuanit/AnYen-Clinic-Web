@@ -7,7 +7,6 @@ import {
   Button,
   TextField,
   MenuItem,
-  Box,
   Typography,
   InputAdornment,
   Grid
@@ -39,6 +38,8 @@ export interface VoucherFormData {
   min_order_value: number;
   usage_limit: number;
   expires_at: string;
+  applicable_to: 'Appointment' | 'Order';
+  discount_scope: 'Appointment' | 'Drug' | 'Shipping';
 }
 
 const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, voucher }) => {
@@ -50,22 +51,27 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
     max_discount: 0,
     min_order_value: 0,
     usage_limit: 0,
-    expires_at: ''
+    expires_at: '',
+    applicable_to: 'Order',
+    discount_scope: 'Drug'
   });
+  const [errors, setErrors] = useState<{ min_order_value?: string }>({});
 
   useEffect(() => {
     if (open) {
       if (voucher) {
         setFormData({
           id: voucher.id,
-          code: voucher.code || voucher.id || '',
-          description: voucher.description || voucher.name || '',
-          discount_type: voucher.discount_type || (String(voucher.discount).includes('%') ? 'Percent' : 'Fixed'),
-          discount_value: typeof voucher.discount_value === 'number' ? voucher.discount_value : parseFloat(String(voucher.discount).replace(/[^0-9.]/g, '')),
+          code: voucher.code || '',
+          description: voucher.description || '',
+          discount_type: voucher.discount_type || 'Percent',
+          discount_value: voucher.discount_value || 0,
           max_discount: voucher.max_discount || 0,
           min_order_value: voucher.min_order_value || 0,
-          usage_limit: voucher.usage_limit || parseInt(String(voucher.usage).split('/')[1]) || 0,
-          expires_at: voucher.expires_at || (voucher.expiry ? voucher.expiry.split('/').reverse().join('-') : '')
+          usage_limit: voucher.usage_limit || 0,
+          expires_at: voucher.expires_at ? new Date(voucher.expires_at).toISOString().split('T')[0] : '',
+          applicable_to: voucher.applicable_to || 'Order',
+          discount_scope: voucher.discount_scope || 'Drug'
         });
       } else {
         setFormData({
@@ -76,7 +82,9 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
           max_discount: 0,
           min_order_value: 0,
           usage_limit: 0,
-          expires_at: ''
+          expires_at: '',
+          applicable_to: 'Order',
+          discount_scope: 'Drug'
         });
       }
     }
@@ -84,22 +92,46 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: type === 'number' ? (value === '' ? 0 : Number(value)) : value 
-    }));
+    if (type === 'number') {
+      // Strip leading zeros for better UX, except if the value is just "0"
+      const cleanedValue = value.replace(/^0+/, '');
+      const numValue = cleanedValue === '' ? 0 : Number(cleanedValue);
+      setFormData(prev => ({
+        ...prev,
+        [name]: numValue < 0 ? 0 : numValue
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+    // Clear error when typing
+    if (name === 'min_order_value' || name === 'discount_value' || name === 'discount_type') {
+      setErrors((prev: any) => ({ ...prev, min_order_value: undefined }));
+    }
   };
 
   const handleSubmit = () => {
+    const isFixed = formData.discount_type === 'Fixed';
+    const isPercent = formData.discount_type === 'Percent';
+
+    if (isFixed && formData.min_order_value < formData.discount_value) {
+      setErrors({ min_order_value: 'Đơn hàng tối thiểu phải lớn hơn hoặc bằng số tiền giảm' });
+      return;
+    }
+
+    if (isPercent && (formData.max_discount || 0) > 0 && formData.min_order_value < (formData.max_discount || 0)) {
+      setErrors({ min_order_value: 'Đơn hàng tối thiểu phải lớn hơn hoặc bằng mức giảm tối đa' });
+      return;
+    }
+
     onSave(formData);
     onClose();
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: { borderRadius: '16px', p: 1 }
@@ -108,7 +140,7 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
       <DialogTitle sx={{ fontWeight: 700, color: '#1E293B', pb: 1 }}>
         {voucher ? 'Chỉnh sửa Voucher' : 'Thêm Voucher mới'}
       </DialogTitle>
-      
+
       <DialogContent sx={{ mt: 2 }}>
         <Grid container spacing={3}>
           {/* Code and Name */}
@@ -125,7 +157,7 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><ConfirmationNumber sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             />
           </Grid>
-          
+
           <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
               Tên chương trình / Mô tả
@@ -138,6 +170,39 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
               placeholder="VD: Ưu đãi hè 2024"
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><Description sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+              Áp dụng cho
+            </Typography>
+            <TextField
+              select
+              fullWidth
+              name="applicable_to"
+              value={formData.applicable_to}
+              onChange={handleChange}
+            >
+              <MenuItem value="Order">Đơn hàng (Order)</MenuItem>
+              <MenuItem value="Appointment">Lịch hẹn (Appointment)</MenuItem>
+            </TextField>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+              Phạm vi giảm giá
+            </Typography>
+            <TextField
+              select
+              fullWidth
+              name="discount_scope"
+              value={formData.discount_scope}
+              onChange={handleChange}
+            >
+              <MenuItem value="Drug">Thuốc (Drug)</MenuItem>
+              <MenuItem value="Appointment">Phí khám (Appointment)</MenuItem>
+              <MenuItem value="Shipping">Phí vận chuyển (Shipping)</MenuItem>
+            </TextField>
           </Grid>
 
           {/* Discount Settings */}
@@ -168,14 +233,16 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
               name="discount_value"
               value={formData.discount_value}
               onChange={handleChange}
-              slotProps={{ 
-                input: { 
+              onFocus={(e) => e.target.select()}
+              slotProps={{
+                input: {
                   startAdornment: (
                     <InputAdornment position="start">
                       {formData.discount_type === 'Percent' ? <Percent sx={{ color: '#94A3B8' }} /> : <AttachMoney sx={{ color: '#94A3B8' }} />}
                     </InputAdornment>
-                  ) 
-                } 
+                  )
+                },
+                htmlInput: { min: 0 }
               }}
             />
           </Grid>
@@ -191,9 +258,13 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
               name="max_discount"
               value={formData.max_discount}
               onChange={handleChange}
+              onFocus={(e) => e.target.select()}
               disabled={formData.discount_type === 'Fixed'}
               placeholder="0 = Không giới hạn"
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+              slotProps={{
+                input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> },
+                htmlInput: { min: 0 }
+              }}
             />
           </Grid>
 
@@ -207,7 +278,13 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
               name="min_order_value"
               value={formData.min_order_value}
               onChange={handleChange}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><ShoppingCart sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+              onFocus={(e) => e.target.select()}
+              error={!!errors.min_order_value}
+              helperText={errors.min_order_value}
+              slotProps={{
+                input: { startAdornment: <InputAdornment position="start"><ShoppingCart sx={{ color: '#94A3B8' }} /></InputAdornment> },
+                htmlInput: { min: 0 }
+              }}
             />
           </Grid>
 
@@ -221,6 +298,7 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
               name="usage_limit"
               value={formData.usage_limit}
               onChange={handleChange}
+              onFocus={(e) => e.target.select()}
               placeholder="0 = Không giới hạn"
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><ConfirmationNumber sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             />
@@ -247,13 +325,13 @@ const VoucherDialog: React.FC<VoucherDialogProps> = ({ open, onClose, onSave, vo
         <Button onClick={onClose} sx={{ textTransform: 'none', color: '#64748B', fontWeight: 600 }}>
           Hủy bỏ
         </Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained" 
-          sx={{ 
-            background: '#00A3FF', 
-            textTransform: 'none', 
-            borderRadius: '10px', 
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          sx={{
+            background: '#00A3FF',
+            textTransform: 'none',
+            borderRadius: '10px',
             px: 4,
             fontWeight: 600,
             '&:hover': { background: '#008BD9' }

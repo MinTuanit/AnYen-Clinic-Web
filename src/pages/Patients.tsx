@@ -26,6 +26,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PatientDialog from '../components/patients/PatientDialog';
 import DeleteConfirmDialog from '../components/doctors/DeleteConfirmDialog';
 import { patientService } from '../services/patientService';
+import { useNotification } from '../contexts/useNotification';
 
 const Patients: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -35,6 +36,7 @@ const Patients: React.FC = () => {
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     fetchPatients();
@@ -44,7 +46,7 @@ const Patients: React.FC = () => {
     try {
       setLoading(true);
       const data = await patientService.getAllPatients();
-      setPatients(data); // Không format ở đây!
+      setPatients(data);
     } catch (error) {
       console.error('Failed to fetch patients:', error);
     } finally {
@@ -67,14 +69,31 @@ const Patients: React.FC = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleSavePatient = (data: any) => {
-    console.log('Saving patient:', data);
-    // API call logic
+  const handleSavePatient = async (data: any) => {
+    try {
+      if (selectedPatient) {
+        // Edit mode - Not fully supported by backend for Admin currently
+        // await patientService.editProfile(data);
+        showNotification('Tính năng chỉnh sửa bệnh nhân đang được cập nhật', 'info');
+      } else {
+        // Create mode
+        const res = await patientService.registerPatient(data);
+        if (res.data.err === 0) {
+          showNotification('Thêm bệnh nhân thành công!');
+          fetchPatients();
+        } else {
+          showNotification(res.data.mes || 'Không thể thêm bệnh nhân', 'error');
+        }
+      }
+      setDialogOpen(false);
+    } catch (error) {
+      console.error('Error saving patient:', error);
+      showNotification('Có lỗi xảy ra khi lưu thông tin bệnh nhân', 'error');
+    }
   };
 
   const handleConfirmDelete = () => {
-    console.log('Deleting patient:', selectedPatient?.id);
-    // Delete logic
+    showNotification('Tính năng xóa bệnh nhân đang được cập nhật', 'info');
     setDeleteDialogOpen(false);
   };
   const pageSize = 5;
@@ -264,7 +283,7 @@ const Patients: React.FC = () => {
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
           onConfirm={handleConfirmDelete}
-          itemName={`Bệnh nhân ${selectedPatient?.name}`}
+          itemName={selectedPatient?.user?.name || selectedPatient?.name}
         />
       </Box>
     </Box>

@@ -51,5 +51,12 @@ export const patientService = {
     return apiClient.post('/patient/emergency-contact', {
       emergency_contact: phone,
     });
+  },
+  
+  registerPatient: async (patient: any) => {
+    return apiClient.post('/auth-patient/register', {
+      phone_number: patient.phone_number,
+      password: patient.password,
+    });
   }
 };

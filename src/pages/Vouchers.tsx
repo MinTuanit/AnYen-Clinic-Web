@@ -19,6 +19,7 @@ import {
   TableRow,
   Paper,
   Pagination,
+  CircularProgress
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
@@ -29,47 +30,53 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import VoucherDialog from '../components/vouchers/VoucherDialog';
 import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 
-const mockVouchers = [
-  { id: 'PSYCH20', name: 'Ưu đãi hè 2024', discount: '20%', expiry: '31/08/2024', usage: '50/100', status: 'Active' },
-  { id: 'WELCOME10', name: 'Chào mừng bạn mới', discount: '10%', expiry: '31/12/2024', usage: '∞', status: 'Active' },
-  { id: 'THANKYOU5', name: 'Tri ân khách hàng', discount: '5%', expiry: '15/07/2024', usage: '100/100', status: 'Inactive' },
-  { id: 'SPECIAL15', name: 'Tuần lễ tâm lý', discount: '15%', expiry: '20/06/2024', usage: '30/30', status: 'Inactive' },
-  { id: 'HEAL25', name: 'Gói trị liệu nhóm', discount: '25%', expiry: '01/10/2024', usage: '12/20', status: 'Active' },
-  { id: 'SUMMER25', name: 'Khuyến mãi mùa hè', discount: '25%', expiry: '30/09/2024', usage: '45/200', status: 'Active' },
-  { id: 'NEWYEAR10', name: 'Lễ tết 2024', discount: '10%', expiry: '05/01/2024', usage: '50/50', status: 'Inactive' },
-  { id: 'KIDS20', name: 'Ưu đãi nhi khoa', discount: '20%', expiry: '15/11/2024', usage: '10/50', status: 'Active' },
-  { id: 'DENTAL15', name: 'Chăm sóc răng miệng', discount: '15%', expiry: '20/12/2024', usage: '5/100', status: 'Active' },
-  { id: 'OLDUSER5', name: 'Khách hàng thân thiết', discount: '5%', expiry: '10/08/2024', usage: '200/200', status: 'Inactive' },
-  { id: 'MEMBER20', name: 'Thành viên VIP', discount: '20%', expiry: '31/12/2025', usage: '∞', status: 'Active' },
-  { id: 'FLASH40', name: 'Flash Sale 40%', discount: '40%', expiry: '01/03/2024', usage: '100/100', status: 'Inactive' },
-  { id: 'BIRTHDAY30', name: 'Mừng sinh nhật', discount: '30%', expiry: '15/05/2024', usage: '0/1', status: 'Inactive' },
-  { id: 'WOMAN20', name: 'Quốc tế phụ nữ', discount: '20%', expiry: '08/03/2024', usage: '48/50', status: 'Inactive' },
-  { id: 'HEALTHY10', name: 'Sống khỏe mỗi ngày', discount: '10%', expiry: '10/10/2024', usage: '80/300', status: 'Active' },
-  { id: 'PROMO15', name: 'Khuyến mãi tháng 10', discount: '15%', expiry: '31/10/2024', usage: '12/100', status: 'Active' },
-  { id: 'VOUCH50', name: 'Siêu giảm giá', discount: '50%', expiry: '25/09/2024', usage: '50/50', status: 'Inactive' },
-  { id: 'GIFT100', name: 'Quà tặng khai trương', discount: '100k', expiry: '30/06/2024', usage: '20/20', status: 'Inactive' },
-  { id: 'CHECKUP20', name: 'Khám tổng quát', discount: '20%', expiry: '20/11/2024', usage: '35/150', status: 'Active' },
-  { id: 'EYECARE15', name: 'Chăm sóc mắt', discount: '15%', expiry: '15/12/2024', usage: '8/60', status: 'Active' },
-];
+import { voucherService } from '../services/voucherService';
+import { Voucher } from '../types/voucher';
 
 const Vouchers: React.FC = () => {
   const [tab, setTab] = useState(0); // 0: Tất cả, 1: Đang chạy (Active), 2: Hết hạn (Inactive)
   const [page, setPage] = useState(1);
   const [isVoucherDialogOpen, setIsVoucherDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
-  
-  const pageSize = 5;
+  const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const pageSize = 10;
+
+  const fetchVouchers = async () => {
+    setLoading(true);
+    try {
+      const data = await voucherService.getAdminVouchers();
+      setVouchers(data || []);
+    } catch (error) {
+      console.error('Error fetching vouchers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchVouchers();
+  }, []);
 
   // Derived data
-  const totalVouchersCount = mockVouchers.length;
-  const activeVouchersCount = mockVouchers.filter(v => v.status === 'Active').length;
-  const inactiveVouchersCount = mockVouchers.filter(v => v.status === 'Inactive').length;
+  const getVoucherStatus = (v: Voucher) => {
+    const now = new Date();
+    if (v.expires_at && new Date(v.expires_at) < now) return 'Expired';
+    if (v.usage_limit && v.used_count >= v.usage_limit) return 'Exhausted';
+    return 'Active';
+  };
 
-  const filteredVouchers = mockVouchers.filter(v => {
+  const totalVouchersCount = (Array.isArray(vouchers) ? vouchers : []).length;
+  const activeVouchersCount = (Array.isArray(vouchers) ? vouchers : []).filter(v => getVoucherStatus(v) === 'Active').length;
+  const inactiveVouchersCount = (Array.isArray(vouchers) ? vouchers : []).filter(v => ['Expired', 'Exhausted'].includes(getVoucherStatus(v))).length;
+
+  const filteredVouchers = (Array.isArray(vouchers) ? vouchers : []).filter(v => {
+    const status = getVoucherStatus(v);
     if (tab === 0) return true;
-    if (tab === 1) return v.status === 'Active';
-    if (tab === 2) return v.status === 'Inactive';
+    if (tab === 1) return status === 'Active';
+    if (tab === 2) return ['Expired', 'Exhausted'].includes(status);
     return true;
   });
 
@@ -87,24 +94,41 @@ const Vouchers: React.FC = () => {
     setIsVoucherDialogOpen(true);
   };
 
-  const handleEditVoucher = (voucher: any) => {
+  const handleEditVoucher = (voucher: Voucher) => {
     setSelectedVoucher(voucher);
     setIsVoucherDialogOpen(true);
   };
 
-  const handleDeleteClick = (voucher: any) => {
+  const handleDeleteClick = (voucher: Voucher) => {
     setSelectedVoucher(voucher);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSaveVoucher = (data: any) => {
-    console.log('Saving voucher:', data);
-    // Logic to update state or call API would go here
+  const handleSaveVoucher = async (data: any) => {
+    try {
+      if (selectedVoucher) {
+        // Update logic not in backend controller? Let's check. 
+        // Admin controller has only create and delete.
+      } else {
+        await voucherService.createVoucher(data);
+      }
+      fetchVouchers();
+      setIsVoucherDialogOpen(false);
+    } catch (error) {
+      console.error('Error saving voucher:', error);
+    }
   };
 
-  const handleConfirmDelete = () => {
-    console.log('Deleting voucher:', selectedVoucher?.id);
-    // Logic to update state or call API would go here
+  const handleConfirmDelete = async () => {
+    try {
+      if (selectedVoucher) {
+        await voucherService.deleteVoucher(selectedVoucher.id);
+        fetchVouchers();
+      }
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting voucher:', error);
+    }
   };
 
 
@@ -181,102 +205,116 @@ const Vouchers: React.FC = () => {
           </Grid>
         </Grid>
 
-        {/* Content Table Container */}
-        <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden' }}>
-          <Box sx={{ p: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0' }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1E293B', fontSize: 16 }}>
-              Danh sách Voucher
-            </Typography>
-            <Tabs
-              value={tab}
-              onChange={handleTabChange}
-              sx={{
-                minHeight: 36,
-                '& .MuiTabs-indicator': { display: 'none' },
-                '& .MuiTab-root': {
-                  textTransform: 'none',
-                  fontWeight: 600,
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+        ) : (
+          <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden' }}>
+            <Box sx={{ p: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#1E293B', fontSize: 16 }}>
+                Danh sách Voucher
+              </Typography>
+              <Tabs
+                value={tab}
+                onChange={handleTabChange}
+                sx={{
                   minHeight: 36,
-                  borderRadius: '8px',
-                  px: 2,
-                  color: '#64748B',
-                  '&.Mui-selected': { background: '#E0F2FE', color: '#00A3FF' }
-                }
-              }}
-            >
-              <Tab label="Tất cả" />
-              <Tab label="Đang chạy" />
-              <Tab label="Hết hạn" />
-            </Tabs>
-          </Box>
-          <Table>
-            <TableHead sx={{ background: '#F8FAFC' }}>
-              <TableRow>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Mã Voucher</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Tên chương trình</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Giảm giá (%)</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Ngày hết hạn</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Số lượng</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Trạng thái</TableCell>
-                <TableCell align="right" sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Thao tác</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {displayedVouchers.map((voucher) => (
-                <TableRow key={voucher.id} sx={{ '&:hover': { background: '#F8FAFC' } }}>
-                  <TableCell sx={{ color: '#00A3FF', fontWeight: 700, fontSize: 13 }}>{voucher.id}</TableCell>
-                  <TableCell sx={{ color: '#1E293B', fontWeight: 500, fontSize: 13 }}>{voucher.name}</TableCell>
-                  <TableCell sx={{ color: '#1E293B', fontWeight: 500, fontSize: 13 }}>{voucher.discount}</TableCell>
-                  <TableCell sx={{ color: '#64748B', fontWeight: 500, fontSize: 13 }}>{voucher.expiry}</TableCell>
-                  <TableCell sx={{ color: '#1E293B', fontWeight: 500, fontSize: 13 }}>{voucher.usage}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Box sx={{ width: 6, height: 6, borderRadius: '50%', background: voucher.status === 'Active' ? '#22C55E' : '#94A3B8' }} />
-                      <Typography
-                        sx={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color: voucher.status === 'Active' ? '#22C55E' : '#64748B',
-                          background: voucher.status === 'Active' ? '#F0FDF4' : '#F1F5F9',
-                          px: 1,
-                          py: 0.25,
-                          borderRadius: '12px'
-                        }}
-                      >
-                        {voucher.status}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditVoucher(voucher)}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(voucher)}><DeleteIcon fontSize="small" /></IconButton>
-                    </Box>
-                  </TableCell>
+                  '& .MuiTabs-indicator': { display: 'none' },
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    minHeight: 36,
+                    borderRadius: '8px',
+                    px: 2,
+                    color: '#64748B',
+                    '&.Mui-selected': { background: '#E0F2FE', color: '#00A3FF' }
+                  }
+                }}
+              >
+                <Tab label="Tất cả" />
+                <Tab label="Đang chạy" />
+                <Tab label="Hết hạn" />
+              </Tabs>
+            </Box>
+            <Table>
+              <TableHead sx={{ background: '#F8FAFC' }}>
+                <TableRow>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Mã Voucher</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Tên chương trình</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Giảm giá (%)</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Ngày hết hạn</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Số lượng</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Trạng thái</TableCell>
+                  <TableCell align="right" sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Thao tác</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {displayedVouchers.map((voucher) => (
+                  <TableRow key={voucher.id} sx={{ '&:hover': { background: '#F8FAFC' } }}>
+                    <TableCell sx={{ color: '#00A3FF', fontWeight: 700, fontSize: 13 }}>{voucher.code}</TableCell>
+                    <TableCell sx={{ color: '#1E293B', fontWeight: 500, fontSize: 13 }}>{voucher.description}</TableCell>
+                    <TableCell sx={{ color: '#1E293B', fontWeight: 500, fontSize: 13 }}>
+                      {voucher.discount_type === 'Percent' ? `${voucher.discount_value}%` : `${new Intl.NumberFormat('vi-VN').format(voucher.discount_value)}đ`}
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B', fontWeight: 500, fontSize: 13 }}>
+                      {voucher.expires_at ? new Date(voucher.expires_at).toLocaleDateString('vi-VN') : 'N/A'}
+                    </TableCell>
+                    <TableCell sx={{ color: '#1E293B', fontWeight: 500, fontSize: 13 }}>
+                      {voucher.usage_limit ? `${voucher.used_count}/${voucher.usage_limit}` : '∞'}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: getVoucherStatus(voucher) === 'Active' ? '#22C55E' : '#94A3B8'
+                        }} />
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: getVoucherStatus(voucher) === 'Active' ? '#22C55E' : '#64748B',
+                            background: getVoucherStatus(voucher) === 'Active' ? '#F0FDF4' : '#F1F5F9',
+                            px: 1,
+                            py: 0.25,
+                            borderRadius: '12px'
+                          }}
+                        >
+                          {getVoucherStatus(voucher)}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                        <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditVoucher(voucher)}><EditIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(voucher)}><DeleteIcon fontSize="small" /></IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
 
-          {/* Pagination */}
-          <Box sx={{ p: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0' }}>
-            <Typography variant="body2" color="#64748B">
-              Hiển thị {totalFiltered > 0 ? ((page - 1) * pageSize) + 1 : 0}-{Math.min(page * pageSize, totalFiltered)} trong số {totalFiltered} voucher
-            </Typography>
-            <Pagination
-              count={pageCount}
-              page={page}
-              onChange={(_, value) => setPage(value)}
-              shape="rounded"
-              color="primary"
-              size="small"
-              sx={{
-                '& .MuiPaginationItem-root': { borderRadius: '8px', fontWeight: 600 },
-                '& .Mui-selected': { background: '#00A3FF !important', color: '#fff' }
-              }}
-            />
-          </Box>
-        </TableContainer>
+            {/* Pagination */}
+            <Box sx={{ p: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0' }}>
+              <Typography variant="body2" color="#64748B">
+                Hiển thị {totalFiltered > 0 ? ((page - 1) * pageSize) + 1 : 0}-{Math.min(page * pageSize, totalFiltered)} trong số {totalFiltered} voucher
+              </Typography>
+              <Pagination
+                count={pageCount}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                shape="rounded"
+                color="primary"
+                size="small"
+                sx={{
+                  '& .MuiPaginationItem-root': { borderRadius: '8px', fontWeight: 600 },
+                  '& .Mui-selected': { background: '#00A3FF !important', color: '#fff' }
+                }}
+              />
+            </Box>
+          </TableContainer>
+        )}
 
         {/* Dialogs */}
         <VoucherDialog
@@ -292,7 +330,7 @@ const Vouchers: React.FC = () => {
           onConfirm={handleConfirmDelete}
           title="Xóa Voucher"
           message="Bạn có chắc chắn muốn xóa voucher này? Hành động này không thể hoàn tác."
-          itemName={selectedVoucher?.name}
+          itemName={selectedVoucher?.code || selectedVoucher?.description}
         />
       </Box>
     </Box>

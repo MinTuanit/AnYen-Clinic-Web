@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import ActionButton from '../components/ActionButton';
 import {
@@ -18,9 +18,9 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Avatar,
   Chip,
   IconButton,
+  CircularProgress
 } from '@mui/material';
 import Pagination from '@mui/material/Pagination';
 import OrderDialog from '../components/orders/OrderDialog';
@@ -34,143 +34,72 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { orderService } from '../services/orderService';
+import { Order, OrderStatus } from '../types/order';
 
-// Mock data based on Order model and UI requirements
-const mockOrders = [
-  {
-    id: 'ORD001',
-    customer: { name: 'Nguyễn Văn A', avatar: '' },
-    total: 450000,
-    date: '12/03/2024',
-    orderStatus: 'Processing',
-    paymentStatus: 'Paid',
-    delivery_address: '123 Đường ABC, Quận 1, TP.HCM',
-    patient_id: 'PAT001',
-    medicines: [
-      { name: 'Paracetamol 500mg', dosage: 'Uống 1 viên sau ăn', quantity: 2, price: 50000 },
-      { name: 'Vitamin C 1000mg', dosage: 'Sáng 1 viên', quantity: 1, price: 150000 },
-      { name: 'Antibiotic X', dosage: 'Ngày 2 lần', quantity: 1, price: 200000 }
-    ],
-    voucher: { code: 'SALES10', discount_type: 'Percent', discount_value: 10, max_discount: 50000 }
-  },
-  {
-    id: 'ORD002',
-    customer: { name: 'Trần Thị B', avatar: '' },
-    total: 1200000,
-    date: '11/03/2024',
-    orderStatus: 'Delivering',
-    paymentStatus: 'Paid',
-    delivery_address: '456 Đường XYZ, Quận 7, TP.HCM',
-    patient_id: 'PAT002',
-    medicines: [
-      { name: 'Special Treatment Kit', dosage: 'Theo chỉ dẫn', quantity: 1, price: 1200000 }
-    ],
-    voucher: null
-  },
-  {
-    id: 'ORD003',
-    customer: { name: 'Lê Văn C', avatar: '' },
-    total: 890000,
-    date: '10/03/2024',
-    orderStatus: 'Completed',
-    paymentStatus: 'Paid',
-    delivery_address: '789 Đường LMN, Thủ Đức, TP.HCM',
-    patient_id: 'PAT003',
-    medicines: [
-      { name: 'Medicine A', dosage: 'Sáng 1 viên', quantity: 3, price: 100000 },
-      { name: 'Medicine B', dosage: 'Tối 1 viên', quantity: 2, price: 300000 }
-    ],
-    voucher: { code: 'FIXED50', discount_type: 'Fixed', discount_value: 50000 }
-  },
-  {
-    id: 'ORD004',
-    customer: { name: 'Phạm Thị D', avatar: '' },
-    total: 300000,
-    date: '09/03/2024',
-    orderStatus: 'Processing',
-    paymentStatus: 'Pending',
-    delivery_address: '321 Đường GHI, Quận 3, TP.HCM',
-    patient_id: 'PAT004',
-    medicines: [
-      { name: 'Eye Drops', dosage: 'Ngày 3 lần', quantity: 2, price: 150000 }
-    ],
-    voucher: null
-  },
-  {
-    id: 'ORD005',
-    customer: { name: 'Hoàng Văn E', avatar: '' },
-    total: 150000,
-    date: '08/03/2024',
-    orderStatus: 'Cancelled',
-    paymentStatus: 'Refunded',
-    delivery_address: '654 Đường JKL, Bình Thạnh, TP.HCM',
-    patient_id: 'PAT005',
-    medicines: [
-      { name: 'Bandages', dosage: 'Thay hàng ngày', quantity: 5, price: 30000 }
-    ],
-    voucher: null
-  },
-  { id: 'ORD-9421', customer: { name: 'Nguyễn Văn An', initials: 'NA' }, date: '14/03/2024', total: 1250000, paymentStatus: 'Paid', orderStatus: 'Delivering' },
-  { id: 'ORD-9422', customer: { name: 'Trần Thị Hoa', initials: 'TH' }, date: '13/03/2024', total: 850000, paymentStatus: 'Pending', orderStatus: 'Processing' },
-  { id: 'ORD-9423', customer: { name: 'Lê Minh', initials: 'LM' }, date: '12/03/2024', total: 2100000, paymentStatus: 'Paid', orderStatus: 'Completed' },
-  { id: 'ORD-9424', customer: { name: 'Phạm Tú', initials: 'PT' }, date: '11/03/2024', total: 450000, paymentStatus: 'Refunded', orderStatus: 'Cancelled' },
-  { id: 'ORD-9425', customer: { name: 'Lê Thị Mai', initials: 'LM' }, date: '15/03/2024', total: 550000, paymentStatus: 'Paid', orderStatus: 'Completed' },
-  { id: 'ORD-9426', customer: { name: 'Trần Văn B', initials: 'VB' }, date: '10/03/2024', total: 320000, paymentStatus: 'Paid', orderStatus: 'Delivering' },
-  { id: 'ORD-9427', customer: { name: 'Phạm Thị C', initials: 'PC' }, date: '05/03/2024', total: 980000, paymentStatus: 'Pending', orderStatus: 'Processing' },
-  { id: 'ORD-9428', customer: { name: 'Vũ Văn D', initials: 'VD' }, date: '01/03/2024', total: 1100000, paymentStatus: 'Paid', orderStatus: 'Completed' },
-  { id: 'ORD-9420', customer: { name: 'Bùi Thị E', initials: 'BE' }, date: '28/02/2024', total: 750000, paymentStatus: 'Paid', orderStatus: 'Completed' },
-];
-
-const paymentStatusStyles: Record<string, { bg: string, color: string, label: string }> = {
-  Paid: { bg: '#E8F8F1', color: '#27AE60', label: 'Đã thanh toán' },
-  Pending: { bg: '#FFF7ED', color: '#F97316', label: 'Chờ thanh toán' },
-  Refunded: { bg: '#F1F5F9', color: '#64748B', label: 'Hoàn tiền' },
-};
-
-const orderStatusStyles: Record<string, { bg: string, color: string, label: string, icon: React.ReactElement }> = {
-  Delivering: { bg: '#EEF2FF', color: '#4F46E5', label: 'Đang giao', icon: <LocalShippingIcon sx={{ fontSize: 16 }} /> },
-  Processing: { bg: '#F1F5F9', color: '#475569', label: 'Đang xử lý', icon: <AutorenewIcon sx={{ fontSize: 16 }} /> },
-  Completed: { bg: '#E8F8F1', color: '#27AE60', label: 'Hoàn thành', icon: <CheckCircleOutlineIcon sx={{ fontSize: 16 }} /> },
-  Cancelled: { bg: '#FEF2F2', color: '#EF4444', label: 'Đã hủy', icon: <CancelOutlinedIcon sx={{ fontSize: 16 }} /> },
+const orderStatusStyles: Record<OrderStatus, { bg: string, color: string, label: string, icon: React.ReactElement }> = {
+  [OrderStatus.Delivering]: { bg: '#EEF2FF', color: '#4F46E5', label: 'Đang giao', icon: <LocalShippingIcon sx={{ fontSize: 16 }} /> },
+  [OrderStatus.Pending]: { bg: '#F1F5F9', color: '#475569', label: 'Chờ xử lý', icon: <AutorenewIcon sx={{ fontSize: 16 }} /> },
+  [OrderStatus.Delivered]: { bg: '#E8F8F1', color: '#27AE60', label: 'Hoàn thành', icon: <CheckCircleOutlineIcon sx={{ fontSize: 16 }} /> },
+  [OrderStatus.Cancelled]: { bg: '#FEF2F2', color: '#EF4444', label: 'Đã hủy', icon: <CancelOutlinedIcon sx={{ fontSize: 16 }} /> },
+  [OrderStatus.Returning]: { bg: '#FFF7ED', color: '#F97316', label: 'Đang trả hàng', icon: <AutorenewIcon sx={{ fontSize: 16 }} /> },
+  [OrderStatus.Returned]: { bg: '#F1F5F9', color: '#64748B', label: 'Đã trả hàng', icon: <CheckCircleOutlineIcon sx={{ fontSize: 16 }} /> },
 };
 
 const Orders: React.FC = () => {
   const [tab, setTab] = useState(0);
-  const [month, setMonth] = useState('03');
-  const [year, setYear] = useState('2024');
+  const [month, setMonth] = useState(String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [year, setYear] = useState(String(new Date().getFullYear()));
   const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const pageSize = 5;
+  const pageSize = 10;
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const statuses = tab === 0 ? '' :
+        tab === 1 ? 'Pending' :
+          tab === 2 ? 'Delivering' :
+            tab === 3 ? 'Delivered' : 'Cancelled';
+
+      const data = await orderService.getAllOrders({ statuses });
+      setOrders(data);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [tab]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN').format(amount) + '₫';
   };
 
-  const filteredOrders = mockOrders.filter(order => {
-    // Status filter
-    const statusMatch = tab === 0 ||
-      (tab === 1 && order.orderStatus === 'Processing') ||
-      (tab === 2 && order.orderStatus === 'Delivering') ||
-      (tab === 3 && order.orderStatus === 'Completed') ||
-      (tab === 4 && order.orderStatus === 'Cancelled');
-
+  const filteredOrders = (Array.isArray(orders) ? orders : []).filter(order => {
     // Search filter
-    const searchMatch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customer.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchMatch = order.order_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.delivery_address.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Date filter (mock data format is DD/MM/YYYY)
-    const [d, m, y] = order.date.split('/');
-    const dateMatch = m === month && y === year;
+    // Date filter
+    const orderDate = new Date(order.createdAt);
+    const dateMatch = (orderDate.getMonth() + 1) === parseInt(month) &&
+      orderDate.getFullYear() === parseInt(year);
 
-    return statusMatch && searchMatch && dateMatch;
+    return searchMatch && dateMatch;
   }).sort((a, b) => {
-    const dateA = new Date(a.date.split('/').reverse().join('-')).getTime();
-    const dateB = new Date(b.date.split('/').reverse().join('-')).getTime();
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
     return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
   });
 
@@ -188,24 +117,38 @@ const Orders: React.FC = () => {
     setIsOrderDialogOpen(true);
   };
 
-  const handleViewOrder = (order: any) => {
+  const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setIsOrderDialogOpen(true);
   };
 
-  const handleDeleteClick = (order: any) => {
+  const handleDeleteClick = (order: Order) => {
     setSelectedOrder(order);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSaveOrder = (data: any) => {
-    console.log('Saving order:', data);
-    // Logic to update state or call API would go here
+  const handleSaveOrder = async (data: any) => {
+    try {
+      if (selectedOrder) {
+        await orderService.updateOrderStatus(selectedOrder.order_id, data.status);
+      }
+      fetchOrders();
+      setIsOrderDialogOpen(false);
+    } catch (error) {
+      console.error('Error saving order:', error);
+    }
   };
 
-  const handleConfirmDelete = () => {
-    console.log('Deleting order:', selectedOrder?.id);
-    // Logic to update state or call API would go here
+  const handleConfirmDelete = async () => {
+    try {
+      if (selectedOrder) {
+        await orderService.deleteOrder(selectedOrder.order_id);
+        fetchOrders();
+      }
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting order:', error);
+    }
   };
 
   return (
@@ -266,7 +209,7 @@ const Orders: React.FC = () => {
         {/* Filter Bar */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', }}>
           <TextField
-            placeholder="Tìm kiếm mã đơn, tên khách hàng..."
+            placeholder="Tìm kiếm mã đơn, địa chỉ..."
             size="small"
             value={searchQuery}
             onChange={(e) => {
@@ -275,7 +218,7 @@ const Orders: React.FC = () => {
             }}
             sx={{
               width: 380,
-              '& .MuiOutl8nedInput-root': {
+              '& .MuiOutlinedInput-root': {
                 bgcolor: '#fff',
                 borderRadius: '12px',
               }
@@ -343,7 +286,7 @@ const Orders: React.FC = () => {
                   size="small"
                   sx={{ bgcolor: '#fff', borderRadius: '12px', minWidth: 100, fontSize: 14 }}
                 >
-                  {['2023', '2024', '2025'].map(y => (
+                  {['2023', '2024', '2025', '2026'].map(y => (
                     <MenuItem key={y} value={y}>{y}</MenuItem>
                   ))}
                 </Select>
@@ -351,98 +294,86 @@ const Orders: React.FC = () => {
             </Box>
           </Box>
         </Box>
-
-        {/* Table Section */}
-        <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
-          <Table>
-            <TableHead sx={{ bgcolor: '#F8FAFC' }}>
-              <TableRow>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Mã đơn hàng</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Khách hàng</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Ngày đặt</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Tổng tiền</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Thanh toán</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Trạng thái đơn</TableCell>
-                <TableCell align="right" sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Thao tác</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {pagedOrders.map((order) => (
-                <TableRow key={order.id} sx={{ '&:hover': { bgcolor: '#F1F5F9' }, transition: '0.2s' }}>
-                  <TableCell sx={{ color: '#00A3FF', fontWeight: 600 }}>#{order.id}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: '#F1F5F9', color: '#64748B', fontSize: 12, fontWeight: 700 }}>
-                        {order.customer.initials}
-                      </Avatar>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: '#1E293B' }}>{order.customer.name}</Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell sx={{ color: '#64748B', fontSize: 14 }}>{order.date}</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#1E293B' }}>{formatCurrency(order.total)}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={paymentStatusStyles[order.paymentStatus].label}
-                      size="small"
-                      sx={{
-                        bgcolor: paymentStatusStyles[order.paymentStatus].bg,
-                        color: paymentStatusStyles[order.paymentStatus].color,
-                        fontWeight: 600,
-                        fontSize: 12,
-                        borderRadius: '12px',
-                        '& .MuiChip-label': { px: 1 }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      icon={orderStatusStyles[order.orderStatus].icon}
-                      label={orderStatusStyles[order.orderStatus].label}
-                      size="small"
-                      sx={{
-                        bgcolor: orderStatusStyles[order.orderStatus].bg,
-                        color: orderStatusStyles[order.orderStatus].color,
-                        fontWeight: 600,
-                        fontSize: 12,
-                        borderRadius: '12px',
-                        px: 0.5,
-                        '& .MuiChip-icon': { color: 'inherit', ml: 0.5 }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleViewOrder(order)}>
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(order)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+        ) : (
+          <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
+            <Table>
+              <TableHead sx={{ bgcolor: '#F8FAFC' }}>
+                <TableRow>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Mã đơn hàng</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Địa chỉ</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Ngày đặt</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Tổng tiền</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>PTTT</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Trạng thái đơn</TableCell>
+                  <TableCell align="right" sx={{ color: '#64748B', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Thao tác</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {/* Pagination */}
-          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0' }}>
-            <Typography variant="body2" sx={{ color: '#64748B' }}>
-              Hiển thị {totalFiltered > 0 ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, totalFiltered)} trong tổng số {totalFiltered} đơn hàng
-            </Typography>
-            <Pagination
-              count={pageCount}
-              page={page}
-              onChange={(_, value) => setPage(value)}
-              shape="rounded"
-              color="primary"
-              size="small"
-              sx={{
-                '& .Mui-selected': { bgcolor: '#00A3FF !important', color: '#fff' }
-              }}
-            />
-          </Box>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {pagedOrders.map((order) => (
+                  <TableRow key={order.order_id} sx={{ '&:hover': { bgcolor: '#F1F5F9' }, transition: '0.2s' }}>
+                    <TableCell sx={{ color: '#00A3FF', fontWeight: 600 }}>#{order.order_id.slice(0, 8)}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ color: '#1E293B', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {order.delivery_address}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B', fontSize: 14 }}>{new Date(order.createdAt).toLocaleDateString('vi-VN')}</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: '#1E293B' }}>
+                      {formatCurrency(Number(order.payment?.total_price ?? order.total_amount ?? 0))}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ color: '#64748B' }}>{order.payment_method}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        icon={orderStatusStyles[order.status]?.icon}
+                        label={orderStatusStyles[order.status]?.label || order.status}
+                        size="small"
+                        sx={{
+                          bgcolor: orderStatusStyles[order.status]?.bg || '#F1F5F9',
+                          color: orderStatusStyles[order.status]?.color || '#475569',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          borderRadius: '12px',
+                          px: 0.5,
+                          '& .MuiChip-icon': { color: 'inherit', ml: 0.5 }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                        <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleViewOrder(order)}>
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(order)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0' }}>
+              <Typography variant="body2" sx={{ color: '#64748B' }}>
+                Hiển thị {totalFiltered > 0 ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, totalFiltered)} trong tổng số {totalFiltered} đơn hàng
+              </Typography>
+              <Pagination
+                count={pageCount}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                shape="rounded"
+                color="primary"
+                size="small"
+                sx={{
+                  '& .Mui-selected': { bgcolor: '#00A3FF !important', color: '#fff' }
+                }}
+              />
+            </Box>
+          </TableContainer>
+        )}
 
         {/* Dialogs */}
         <OrderDialog
@@ -458,7 +389,7 @@ const Orders: React.FC = () => {
           onConfirm={handleConfirmDelete}
           title="Xóa Đơn hàng"
           message="Bạn có chắc chắn muốn xóa đơn hàng này? Hành động này không thể hoàn tác."
-          itemName={selectedOrder ? `Đơn hàng #${selectedOrder.id}` : ''}
+          itemName={selectedOrder ? `Đơn hàng #${(selectedOrder.order_id || selectedOrder.id || '').slice(0, 8)}` : ''}
         />
       </Box>
     </Box>

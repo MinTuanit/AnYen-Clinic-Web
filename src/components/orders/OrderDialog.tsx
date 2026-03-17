@@ -26,7 +26,6 @@ import {
   Person,
   Home,
   Update,
-  AttachMoney,
   LocalOffer,
   Medication,
   ShoppingCart,
@@ -46,7 +45,7 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
     status: 'Pending',
     delivery_address: '',
     patient_id: '',
-    medicines: [] as any[],
+    drugs: [] as any[],
     voucher: null as any
   });
 
@@ -54,10 +53,15 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
     if (open) {
       if (order) {
         setFormData({
-          status: order.orderStatus || 'Pending',
+          status: order.status || 'Pending',
           delivery_address: order.delivery_address || '',
           patient_id: order.patient_id || '',
-          medicines: order.medicines || [],
+          drugs: order.prescription?.prescription_details?.map((d: any) => ({
+            name: d.medicine_name || d.drug?.name,
+            dosage: d.dosage,
+            quantity: d.quantity,
+            price: Number(d.drug?.price || 0)
+          })) || [],
           voucher: order.voucher || null
         });
       } else {
@@ -65,7 +69,7 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
           status: 'Pending',
           delivery_address: '',
           patient_id: '',
-          medicines: [],
+          drugs: [],
           voucher: null
         });
       }
@@ -83,7 +87,7 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
   };
 
   const calculateSubtotal = () => {
-    return formData.medicines.reduce((sum, med) => sum + (med.price * med.quantity), 0);
+    return formData.drugs.reduce((sum, med) => sum + (med.price * med.quantity), 0);
   };
 
   const calculateDiscount = () => {
@@ -102,7 +106,8 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
   };
 
   const calculateTotal = () => {
-    return Math.max(0, calculateSubtotal() - calculateDiscount());
+    const fromPayment = order?.payment?.total_price ? Number(order.payment.total_price) : 0;
+    return fromPayment || Math.max(0, calculateSubtotal() - calculateDiscount());
   };
 
   const formatCurrency = (amount: number) => {
@@ -110,17 +115,17 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: { borderRadius: '16px', p: 1 }
       }}
     >
       <DialogTitle sx={{ fontWeight: 700, color: '#1E293B', pb: 1 }}>
-        {order ? `Chi tiết Đơn hàng #${order.id}` : 'Tạo Đơn hàng mới'}
+        {order ? `Chi tiết Đơn hàng #${(order.order_id || order.id || '').slice(0, 8)}` : 'Tạo Đơn hàng mới'}
       </DialogTitle>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}>
@@ -129,7 +134,7 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
           <Tab icon={<Medication sx={{ fontSize: 20 }} />} iconPosition="start" label="Danh mục thuốc" />
         </Tabs>
       </Box>
-      
+
       <DialogContent sx={{ mt: 2 }}>
         {tabIndex === 0 && (
           <Grid container spacing={3}>
@@ -141,7 +146,7 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
               <TextField
                 fullWidth
                 disabled={!!order}
-                value={order?.customer?.name || ''}
+                value={order?.patient?.user?.name || order?.patient?.anonymous_name || order?.customer?.name || ''}
                 placeholder="Tên khách hàng..."
                 slotProps={{ input: { startAdornment: <InputAdornment position="start"><Person sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
               />
@@ -244,7 +249,7 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {formData.medicines.length > 0 ? formData.medicines.map((med: any, index: number) => (
+                  {formData.drugs.length > 0 ? formData.drugs.map((med: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>{med.name}</Typography>
@@ -257,24 +262,24 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
                   )) : (
                     <TableRow>
                       <TableCell colSpan={4} align="center" sx={{ py: 4, color: '#94A3B8' }}>
-                         Chưa có thuốc trong đơn hàng này
+                        Chưa có thuốc trong đơn hàng này
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
             </TableContainer>
-            
+
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-               <Button 
-                 variant="outlined" 
-                 startIcon={<ShoppingCart sx={{ fontSize: 18 }} />}
-                 sx={{ textTransform: 'none', borderRadius: '8px' }}
-                 size="small"
-                 disabled 
-               >
-                 Tùy chỉnh giỏ hàng (Prescription)
-               </Button>
+              <Button
+                variant="outlined"
+                startIcon={<ShoppingCart sx={{ fontSize: 18 }} />}
+                sx={{ textTransform: 'none', borderRadius: '8px' }}
+                size="small"
+                disabled
+              >
+                Tùy chỉnh giỏ hàng (Prescription)
+              </Button>
             </Box>
           </Box>
         )}
@@ -284,13 +289,13 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
         <Button onClick={onClose} sx={{ textTransform: 'none', color: '#64748B', fontWeight: 600 }}>
           Hủy bỏ
         </Button>
-        <Button 
-          onClick={() => onSave(formData)} 
-          variant="contained" 
-          sx={{ 
-            background: '#00A3FF', 
-            textTransform: 'none', 
-            borderRadius: '10px', 
+        <Button
+          onClick={() => onSave(formData)}
+          variant="contained"
+          sx={{
+            background: '#00A3FF',
+            textTransform: 'none',
+            borderRadius: '10px',
             px: 4,
             fontWeight: 600,
             '&:hover': { background: '#008BD9' }
