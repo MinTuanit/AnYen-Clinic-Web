@@ -7,7 +7,6 @@ import {
   Button,
   TextField,
   MenuItem,
-  Box,
   Typography,
   InputAdornment,
   Grid
@@ -19,50 +18,46 @@ import {
   Scale,
   Inventory,
   AttachMoney,
-  AddShoppingCart
 } from '@mui/icons-material';
 
-interface MedicineDialogProps {
+interface DrugDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: MedicineFormData) => void;
-  medicine?: any; // If provided, we are in Edit mode
+  onSave: (data: DrugFormData) => void;
+  drug?: any; // If provided, we are in Edit mode
 }
 
-export interface MedicineFormData {
+export interface DrugFormData {
   id?: string;
   name: string;
   subtext: string;
   category: string;
   unit: string;
   stock: number;
-  maxStock: number;
   price: number;
 }
 
-const MedicineDialog: React.FC<MedicineDialogProps> = ({ open, onClose, onSave, medicine }) => {
-  const [formData, setFormData] = useState<MedicineFormData>({
+const DrugDialog: React.FC<DrugDialogProps> = ({ open, onClose, onSave, drug }) => {
+  const [formData, setFormData] = useState<DrugFormData>({
     name: '',
     subtext: '',
     category: 'Giảm đau',
     unit: 'Viên',
     stock: 0,
-    maxStock: 100,
     price: 0
   });
 
   useEffect(() => {
     if (open) {
-      if (medicine) {
+      if (drug) {
         setFormData({
-          id: medicine.id,
-          name: medicine.name || '',
-          subtext: medicine.subtext || '',
-          category: medicine.category || 'Giảm đau',
-          unit: medicine.unit || 'Viên',
-          stock: medicine.stock || 0,
-          maxStock: medicine.maxStock || 100,
-          price: medicine.price || 0
+          id: drug.id,
+          name: drug.name || '',
+          subtext: drug.description || '',
+          category: drug.category || 'Giảm đau',
+          unit: drug.unit || 'Viên',
+          stock: drug.stock || 0,
+          price: drug.price || 0
         });
       } else {
         setFormData({
@@ -71,19 +66,24 @@ const MedicineDialog: React.FC<MedicineDialogProps> = ({ open, onClose, onSave, 
           category: 'Giảm đau',
           unit: 'Viên',
           stock: 0,
-          maxStock: 100,
           price: 0
         });
       }
     }
-  }, [medicine, open]);
+  }, [drug, open]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: type === 'number' ? (value === '' ? 0 : Number(value)) : value 
-    }));
+    if (type === 'number') {
+      const cleanedValue = value.replace(/^0+/, '');
+      const numValue = cleanedValue === '' ? 0 : Number(cleanedValue);
+      setFormData(prev => ({
+        ...prev,
+        [name]: numValue < 0 ? 0 : numValue
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = () => {
@@ -92,19 +92,19 @@ const MedicineDialog: React.FC<MedicineDialogProps> = ({ open, onClose, onSave, 
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: { borderRadius: '16px', p: 1 }
       }}
     >
       <DialogTitle sx={{ fontWeight: 700, color: '#1E293B', pb: 1 }}>
-        {medicine ? 'Chỉnh sửa Thuốc' : 'Thêm Thuốc mới'}
+        {drug ? 'Chỉnh sửa Thuốc' : 'Thêm Thuốc mới'}
       </DialogTitle>
-      
+
       <DialogContent sx={{ mt: 2 }}>
         <Grid container spacing={3}>
           {/* Name and Subtext */}
@@ -121,7 +121,7 @@ const MedicineDialog: React.FC<MedicineDialogProps> = ({ open, onClose, onSave, 
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><Medication sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             />
           </Grid>
-          
+
           <Grid size={{ xs: 12, md: 4 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
               Đơn vị tính
@@ -182,7 +182,11 @@ const MedicineDialog: React.FC<MedicineDialogProps> = ({ open, onClose, onSave, 
               name="price"
               value={formData.price}
               onChange={handleChange}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+              onFocus={(e) => e.target.select()}
+              slotProps={{
+                input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> },
+                htmlInput: { min: 0 }
+              }}
             />
           </Grid>
 
@@ -197,21 +201,11 @@ const MedicineDialog: React.FC<MedicineDialogProps> = ({ open, onClose, onSave, 
               name="stock"
               value={formData.stock}
               onChange={handleChange}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><Inventory sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
-              Định mức tồn tối đa
-            </Typography>
-            <TextField
-              fullWidth
-              type="number"
-              name="maxStock"
-              value={formData.maxStock}
-              onChange={handleChange}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><AddShoppingCart sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+              onFocus={(e) => e.target.select()}
+              slotProps={{
+                input: { startAdornment: <InputAdornment position="start"><Inventory sx={{ color: '#94A3B8' }} /></InputAdornment> },
+                htmlInput: { min: 0 }
+              }}
             />
           </Grid>
         </Grid>
@@ -221,13 +215,13 @@ const MedicineDialog: React.FC<MedicineDialogProps> = ({ open, onClose, onSave, 
         <Button onClick={onClose} sx={{ textTransform: 'none', color: '#64748B', fontWeight: 600 }}>
           Hủy bỏ
         </Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained" 
-          sx={{ 
-            background: '#00A3FF', 
-            textTransform: 'none', 
-            borderRadius: '10px', 
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          sx={{
+            background: '#00A3FF',
+            textTransform: 'none',
+            borderRadius: '10px',
             px: 4,
             fontWeight: 600,
             '&:hover': { background: '#008BD9' }
@@ -240,4 +234,4 @@ const MedicineDialog: React.FC<MedicineDialogProps> = ({ open, onClose, onSave, 
   );
 };
 
-export default MedicineDialog;
+export default DrugDialog;

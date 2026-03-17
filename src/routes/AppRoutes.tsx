@@ -6,7 +6,7 @@ import Dashboard from "../pages/Dashboard";
 import Appointments from "../pages/Appointments";
 import Patients from "../pages/Patients";
 import Doctors from "../pages/Doctors";
-import Medicines from "../pages/Medicines";
+import Drugs from "../pages/Drug";
 import Vouchers from "../pages/Vouchers";
 import Orders from "../pages/Orders";
 import Chat from "../pages/Chat";
@@ -39,73 +39,73 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
-      
+
       <Route path="/" element={
         <ProtectedRoute>
           <Home />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/appointments" element={
         <ProtectedRoute>
           <Appointments />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/patients" element={
         <ProtectedRoute>
           <Patients />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/doctors" element={
         <ProtectedRoute>
           <Doctors />
         </ProtectedRoute>
       } />
-      
-      <Route path="/medicines" element={
+
+      <Route path="/drugs" element={
         <ProtectedRoute>
-          <Medicines />
+          <Drugs />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/vouchers" element={
         <ProtectedRoute>
           <Vouchers />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/orders" element={
         <ProtectedRoute>
           <Orders />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/chat" element={
         <ProtectedRoute>
           <Chat />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/quiz" element={
         <ProtectedRoute>
           <Quiz />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/quiz/create" element={
         <ProtectedRoute>
           <CreateQuiz />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/settings" element={
         <ProtectedRoute>
           <Settings />
