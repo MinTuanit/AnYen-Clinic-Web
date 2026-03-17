@@ -27,7 +27,7 @@ import DeleteConfirmDialog from '../components/doctors/DeleteConfirmDialog';
 import EditIcon from '@mui/icons-material/Edit';
 import { doctorService } from '../services/doctorService';
 import { Doctor } from '../types/doctor';
-import { useNotification } from '../contexts/NotificationContext';
+import { useNotification } from '../contexts/useNotification';
 
 const Doctors: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);

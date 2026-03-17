@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Address, Province, Ward } from '../types/address';
+import { Province, Ward } from '../types/address';
 
 const BASE_URL = 'https://provinces.open-api.vn/api/v2';
 
