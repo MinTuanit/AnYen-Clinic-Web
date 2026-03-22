@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import {
   Box,
@@ -10,7 +10,12 @@ import {
   Avatar,
   Paper,
   Divider,
-  Stack
+  Stack,
+  MenuItem,
+  Select,
+  CircularProgress,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -21,48 +26,97 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 // Types
-import { Answer, ScoreRange, Scale, Question } from '../types/QuizTypes';
+import { ScoreRange, Scale, Question } from '../types/QuizTypes';
 
 // Components
 import QuizQuestion from '../components/QuizQuestion';
 import QuizResultRanges from '../components/QuizResultRanges';
+import { quizService } from '../services/quizService';
 
 const CreateQuiz: React.FC = () => {
   const navigate = useNavigate();
-  const [scales, setScales] = useState<Scale[]>([
-    {
-      name: 'Mức độ lo âu',
-      ranges: [
-        { id: 1, label: 'Bình thường', minScore: 0, maxScore: 15, feedbackText: 'Kết quả cho thấy các triệu chứng của bạn đang ở mức bình thường...' },
-        { id: 2, label: 'Nguy cơ trung bình', minScore: 16, maxScore: 35, feedbackText: 'Cho thấy bạn đang có các triệu chứng lo âu ở mức độ vừa phải...' }
-      ]
-    },
-    { name: 'Trạng thái cảm xúc', ranges: [] }
-  ]);
-  const [questions, setQuestions] = useState<Question[]>([
-    {
-      id: 1,
-      text: '',
-      scale: 'Mức độ lo âu',
-      options: [
-        { text: '', score: 0 },
-        { text: '', score: 0 },
-        { text: '', score: 0 },
-        { text: '', score: 0 }
-      ]
-    },
-    {
-      id: 2,
-      text: '',
-      scale: 'Trạng thái cảm xúc',
-      options: [
-        { text: '', score: 0 },
-        { text: '', score: 0 },
-        { text: '', score: 0 },
-        { text: '', score: 0 }
-      ]
+  const { testId } = useParams<{ testId: string }>();
+  const isEditMode = !!testId;
+
+  const [testName, setTestName] = useState('');
+  const [description, setDescription] = useState('');
+  const [target, setTarget] = useState('Mọi đối tượng');
+  const [status, setStatus] = useState('Hoạt động');
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
+
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error'
+  });
+
+  const [scales, setScales] = useState<Scale[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
+
+  const fetchQuiz = useCallback(async () => {
+    if (!testId) return;
+    try {
+      setFetching(true);
+      const response = await quizService.getQuestionSetsByTestId(testId);
+      if (response.err === 0) {
+        // If response.data is the full test object
+        const quizData = Array.isArray(response.data) ? null : response.data;
+        // If response.data is just the questions array (as in the provided snippet)
+        const questionsArray = Array.isArray(response.data) ? response.data : response.data.questions || [];
+
+        let currentScales: Scale[] = [];
+
+        if (quizData) {
+          setTestName(quizData.test_name || '');
+          setDescription(quizData.description || '');
+          setTarget(quizData.target || 'Mọi đối tượng');
+          setStatus(quizData.status || 'Hoạt động');
+
+          currentScales = (quizData.scales || []).map((s: any) => ({
+            name: s.scale_name,
+            ranges: (s.ranges || []).map((r: any, rIdx: number) => ({
+              id: rIdx + 1,
+              label: r.label,
+              minScore: r.min_score,
+              maxScore: r.max_score,
+              feedbackText: r.feedback_text
+            }))
+          }));
+
+          if (currentScales.length === 0) {
+            currentScales = [{ name: 'Tiêu chí mặc định', ranges: [] }];
+          }
+          setScales(currentScales);
+        }
+
+        const transformedQuestions: Question[] = (questionsArray || []).map((q: any, idx: number) => ({
+          id: idx + 1,
+          text: q.question_text || '',
+          scale: q.scale?.scale_name || q.scale_name || (currentScales[0]?.name || ''),
+          options: (q.answers || []).map((a: any) => ({
+            text: a.answer_text || '',
+            score: a.score || 0
+          }))
+        }));
+        setQuestions(transformedQuestions);
+      }
+    } catch (error) {
+      console.error('Failed to fetch quiz details:', error);
+    } finally {
+      setFetching(false);
     }
-  ]);
+  }, [testId]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      fetchQuiz();
+    } else {
+      // Default empty quiz template
+      setScales([{ name: 'Tiêu chí mặc định', ranges: [] }]);
+      setQuestions([]);
+    }
+  }, [isEditMode, fetchQuiz]);
 
   const addScale = () => {
     setScales([...scales, { name: `Tiêu chí ${scales.length + 1}`, ranges: [] }]);
@@ -180,7 +234,6 @@ const CreateQuiz: React.FC = () => {
   };
 
   const handleOptionScoreChange = (qId: number, optIdx: number, value: string) => {
-    // allow empty string for typing
     if (value === '') {
       setQuestions(questions.map(q => {
         if (q.id === qId) {
@@ -194,7 +247,7 @@ const CreateQuiz: React.FC = () => {
     }
 
     const score = parseInt(value);
-    if (isNaN(score) || score < 0) return;
+    if (isNaN(score)) return;
 
     setQuestions(questions.map(q => {
       if (q.id === qId) {
@@ -205,6 +258,90 @@ const CreateQuiz: React.FC = () => {
       return q;
     }));
   };
+
+  const handleSave = async () => {
+    if (!testName.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Vui lòng nhập tên trắc nghiệm',
+        severity: 'error'
+      });
+      return;
+    }
+
+    const quizPayload = {
+      test_name: testName,
+      description,
+      target,
+      status,
+      scales: scales.map(s => ({
+        scale_name: s.name,
+        ranges: s.ranges.map(r => ({
+          label: r.label,
+          min_score: Number(r.minScore),
+          max_score: Number(r.maxScore),
+          feedback_text: r.feedbackText
+        }))
+      })),
+      questions: questions.map(q => ({
+        question_text: q.text,
+        scale_name: q.scale,
+        answers: q.options.map(o => ({
+          answer_text: o.text,
+          score: Number(o.score)
+        }))
+      }))
+    };
+
+    try {
+      setLoading(true);
+      let response;
+      if (isEditMode && testId) {
+        response = await quizService.updateTest(testId, quizPayload as any);
+      } else {
+        response = await quizService.createTest(quizPayload as any);
+      }
+
+      if (response.err === 0) {
+        setSnackbar({
+          open: true,
+          message: isEditMode ? 'Cập nhật trắc nghiệm thành công!' : 'Tạo trắc nghiệm mới thành công!',
+          severity: 'success'
+        });
+        setTimeout(() => navigate('/quiz'), 1500);
+      } else {
+        setSnackbar({
+          open: true,
+          message: response.mes || 'Thao tác thất bại',
+          severity: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save quiz:', error);
+      setSnackbar({
+        open: true,
+        message: 'Lỗi hệ thống khi lưu trắc nghiệm',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  if (fetching) {
+    return (
+      <Box sx={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC' }}>
+        <Sidebar />
+        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <CircularProgress />
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC' }}>
@@ -225,10 +362,10 @@ const CreateQuiz: React.FC = () => {
             </IconButton>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 700, color: '#1E293B', lineHeight: 1.2 }}>
-                Tạo trắc nghiệm tâm lý
+                {isEditMode ? 'Chỉnh sửa trắc nghiệm' : 'Tạo trắc nghiệm tâm lý'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Thiết lập bộ câu hỏi mới cho bệnh nhân
+                {isEditMode ? 'Cập nhật lại thông tin bộ câu hỏi' : 'Thiết lập bộ câu hỏi mới cho bệnh nhân'}
               </Typography>
             </Box>
           </Box>
@@ -237,7 +374,7 @@ const CreateQuiz: React.FC = () => {
         {/* Content Area */}
         <Box sx={{ p: 4, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {/* General Info */}
-          <Paper sx={{ p: 3, borderRadius: '20px', border: '1px solid #E2E8F0', boxShadow: 'none' }}>
+          <Paper sx={{ p: 4, borderRadius: '20px', border: '1px solid #E2E8F0', boxShadow: 'none' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
               <InfoOutlinedIcon sx={{ color: '#00A3FF' }} />
               <Typography sx={{ fontWeight: 700, color: '#00A3FF' }}>Thông tin chung</Typography>
@@ -248,6 +385,8 @@ const CreateQuiz: React.FC = () => {
                 <TextField
                   fullWidth
                   placeholder="VD: Đánh giá mức độ trầm cảm (PHQ-9)"
+                  value={testName}
+                  onChange={(e) => setTestName(e.target.value)}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', background: '#F8FAFC' } }}
                 />
               </Box>
@@ -258,8 +397,39 @@ const CreateQuiz: React.FC = () => {
                   multiline
                   rows={2}
                   placeholder="Nhập hướng dẫn hoặc mô tả chi tiết bài kiểm tra..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', background: '#F8FAFC' } }}
                 />
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 3 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#1E293B', mb: 1 }}>Đối tượng</Typography>
+                  <Select
+                    fullWidth
+                    value={target}
+                    onChange={(e) => setTarget(e.target.value)}
+                    sx={{ borderRadius: '12px', background: '#F8FAFC' }}
+                  >
+                    <MenuItem value="Mọi đối tượng">Mọi đối tượng</MenuItem>
+                    <MenuItem value="Người trưởng thành">Người trưởng thành</MenuItem>
+                    <MenuItem value="Trẻ em">Trẻ em</MenuItem>
+                    <MenuItem value="Phụ nữ sau sinh">Phụ nữ sau sinh</MenuItem>
+                  </Select>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#1E293B', mb: 1 }}>Trạng thái</Typography>
+                  <Select
+                    fullWidth
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    sx={{ borderRadius: '12px', background: '#F8FAFC' }}
+                  >
+                    <MenuItem value="Hoạt động">Hoạt động</MenuItem>
+                    <MenuItem value="Ngừng hoạt động">Ngừng hoạt động</MenuItem>
+                  </Select>
+                </Box>
               </Box>
 
               <Divider />
@@ -316,7 +486,7 @@ const CreateQuiz: React.FC = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {questions.map((q, qIndex) => (
                 <QuizQuestion
-                  key={q.id}
+                  key={qIndex}
                   question={q}
                   index={qIndex}
                   scales={scales}
@@ -357,31 +527,45 @@ const CreateQuiz: React.FC = () => {
         {/* Footer */}
         <Box sx={{
           p: '16px 32px',
-          background: '#F8FAFC',
+          background: '#fff',
+          borderTop: '1px solid #E2E8F0',
           display: 'flex',
           justifyContent: 'flex-end',
           alignItems: 'center',
           gap: 3
         }}>
-          <Button onClick={() => navigate('/quiz')} sx={{ textTransform: 'none', color: '#1E293B', fontWeight: 600 }}>Hủy bỏ</Button>
+          <Button onClick={() => navigate('/quiz')} sx={{ textTransform: 'none', color: '#64748B', fontWeight: 600 }}>Hủy bỏ</Button>
           <Button
             variant="contained"
-            startIcon={<CheckCircleIcon />}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} /> : <CheckCircleIcon />}
+            onClick={handleSave}
             sx={{
               textTransform: 'none',
               borderRadius: '12px',
               background: '#00A3FF',
               boxShadow: 'none',
-              fontWeight: 600,
+              fontWeight: 700,
               px: 4,
               height: 48,
               '&:hover': { background: '#008BD9', boxShadow: 'none' }
             }}
           >
-            Hoàn tất & Xuất bản
+            {isEditMode ? 'Lưu thay đổi' : 'Hoàn tất & Xuất bản'}
           </Button>
         </Box>
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%', borderRadius: '12px', fontWeight: 600 }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

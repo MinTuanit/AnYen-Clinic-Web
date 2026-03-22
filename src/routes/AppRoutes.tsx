@@ -106,6 +106,12 @@ export default function AppRoutes() {
         </ProtectedRoute>
       } />
 
+      <Route path="/quiz/edit/:testId" element={
+        <ProtectedRoute>
+          <CreateQuiz />
+        </ProtectedRoute>
+      } />
+
       <Route path="/settings" element={
         <ProtectedRoute>
           <Settings />

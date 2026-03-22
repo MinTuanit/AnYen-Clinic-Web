@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import ActionButton from '../components/ActionButton';
@@ -18,19 +18,14 @@ import {
   TableRow,
   Paper,
   Pagination,
-  Link
+  IconButton
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import SortIcon from '@mui/icons-material/Sort';
-
-const mockQuizzes = [
-  { id: 'PSY-001', name: 'Đánh giá mức độ trầm cảm PHQ-9', questions: 9, target: 'Người trưởng thành', createdAt: '12/10/2023', status: 'Hoạt động' },
-  { id: 'PSY-002', name: 'Kiểm tra lo âu GAD-7', questions: 7, target: 'Mọi đối tượng', createdAt: '15/10/2023', status: 'Hoạt động' },
-  { id: 'PSY-003', name: 'Sàng lọc tự kỷ trẻ em M-CHAT-R', questions: 20, target: 'Trẻ em', createdAt: '05/11/2023', status: 'Hoạt động' },
-  { id: 'PSY-004', name: 'Đánh giá stress PSS-10', questions: 10, target: 'Học sinh/Sinh viên', createdAt: '20/11/2023', status: 'Ngừng hoạt động' },
-  { id: 'PSY-005', name: 'Thang đo trầm cảm sau sinh EPDS', questions: 10, target: 'Phụ nữ sau sinh', createdAt: '01/12/2023', status: 'Hoạt động' },
-  { id: 'PSY-006', name: 'Kiểm tra sức khỏe tâm thần tổng quát', questions: 15, target: 'Người trưởng thành', createdAt: '10/12/2023', status: 'Hoạt động' },
-];
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import { quizService } from '../services/quizService';
+import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 
 const statusStyles: Record<string, { bg: string, color: string, dot: string }> = {
   'Hoạt động': { bg: '#F0FDF4', color: '#16A34A', dot: '#22C55E' },
@@ -39,17 +34,58 @@ const statusStyles: Record<string, { bg: string, color: string, dot: string }> =
 
 const Quiz: React.FC = () => {
   const navigate = useNavigate();
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [targetFilter, setTargetFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [page, setPage] = useState(1);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
+
   const pageSize = 5;
 
-  const filteredQuizzes = mockQuizzes.filter(quiz => {
+  const fetchQuizzes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await quizService.getAllTests();
+      if (response.err === 0) {
+        setQuizzes(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch quizzes:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchQuizzes();
+  }, [fetchQuizzes]);
+
+  const handleDeleteClick = (quiz: any) => {
+    setSelectedQuiz(quiz);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (selectedQuiz) {
+      try {
+        const response = await quizService.deleteTest(selectedQuiz.test_id);
+        if (response.err === 0) {
+          await fetchQuizzes();
+        }
+      } catch (error) {
+        console.error('Failed to delete quiz:', error);
+      }
+    }
+  };
+
+  const filteredQuizzes = quizzes.filter(quiz => {
     // Search filter
-    const searchMatch = quiz.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      quiz.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchMatch = (quiz.test_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (quiz.test_id?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
     // Status filter
     const statusMatch = statusFilter === 'all' ||
@@ -66,10 +102,10 @@ const Quiz: React.FC = () => {
 
     return searchMatch && statusMatch && targetMatch;
   }).sort((a, b) => {
-    if (sortBy === 'newest') return new Date(b.createdAt.split('/').reverse().join('-')).getTime() - new Date(a.createdAt.split('/').reverse().join('-')).getTime();
-    if (sortBy === 'oldest') return new Date(a.createdAt.split('/').reverse().join('-')).getTime() - new Date(b.createdAt.split('/').reverse().join('-')).getTime();
-    if (sortBy === 'questions-desc') return b.questions - a.questions;
-    if (sortBy === 'questions-asc') return a.questions - b.questions;
+    if (sortBy === 'newest') return (b.test_id || '').localeCompare(a.test_id || '');
+    if (sortBy === 'oldest') return (a.test_id || '').localeCompare(b.test_id || '');
+    if (sortBy === 'questions-desc') return (b.questions?.length || 0) - (a.questions?.length || 0);
+    if (sortBy === 'questions-asc') return (a.questions?.length || 0) - (b.questions?.length || 0);
     return 0;
   });
 
@@ -157,11 +193,9 @@ const Quiz: React.FC = () => {
               '& .MuiSelect-select': { py: '8.5px' }
             }}
           >
-            <MenuItem value="all">Đối tượng</MenuItem>
-            <MenuItem value="all-targets">Mọi đối tượng</MenuItem>
+            <MenuItem value="all">Mọi Đối tượng</MenuItem>
             <MenuItem value="adult">Người trưởng thành</MenuItem>
             <MenuItem value="child">Trẻ em</MenuItem>
-            <MenuItem value="student">Học sinh/Sinh viên</MenuItem>
             <MenuItem value="postpartum">Phụ nữ sau sinh</MenuItem>
           </Select>
 
@@ -197,19 +231,19 @@ const Quiz: React.FC = () => {
                 <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Tên bài kiểm tra</TableCell>
                 <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Số câu hỏi</TableCell>
                 <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Đối tượng</TableCell>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Ngày tạo</TableCell>
+                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Tác giả</TableCell>
                 <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Trạng thái</TableCell>
                 <TableCell align="center" sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Thao tác</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {pagedQuizzes.map((quiz) => (
-                <TableRow key={quiz.id} sx={{ '&:hover': { background: '#F1F5F9' }, transition: '0.2s' }}>
+              {!loading && pagedQuizzes.map((quiz) => (
+                <TableRow key={quiz.test_id} sx={{ '&:hover': { background: '#F1F5F9' }, transition: '0.2s' }}>
                   <TableCell sx={{ py: 2 }}>
-                    <Typography fontWeight={600} color="#1E293B" fontSize={14}>{quiz.name}</Typography>
-                    <Typography color="#64748B" fontSize={12}>Mã test: {quiz.id}</Typography>
+                    <Typography fontWeight={600} color="#1E293B" fontSize={14}>{quiz.test_name}</Typography>
+                    <Typography color="#64748B" fontSize={12}>Mã test: {quiz.test_id?.slice(0, 8)}...</Typography>
                   </TableCell>
-                  <TableCell sx={{ color: '#475569', fontSize: 14 }}>{quiz.questions} câu</TableCell>
+                  <TableCell sx={{ color: '#475569', fontSize: 14 }}>{(quiz.questions || []).length} câu</TableCell>
                   <TableCell>
                     <Chip
                       label={quiz.target}
@@ -223,7 +257,7 @@ const Quiz: React.FC = () => {
                       }}
                     />
                   </TableCell>
-                  <TableCell sx={{ color: '#475569', fontSize: 14 }}>{quiz.createdAt}</TableCell>
+                  <TableCell sx={{ color: '#475569', fontSize: 14 }}>{quiz.creator?.name || 'Hệ thống'}</TableCell>
                   <TableCell>
                     <Chip
                       icon={<Box sx={{ width: 6, height: 6, borderRadius: '50%', background: statusStyles[quiz.status]?.dot, ml: 1 }} />}
@@ -240,25 +274,36 @@ const Quiz: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell align="center">
-                    <Link
-                      href="#"
-                      underline="none"
-                      sx={{
-                        color: '#00A3FF',
-                        fontWeight: 600,
-                        fontSize: 14,
-                        '&:hover': { textDecoration: 'underline' }
-                      }}
-                    >
-                      Chỉnh sửa
-                    </Link>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                      <IconButton
+                        onClick={() => navigate(`/quiz/edit/${quiz.test_id}`)}
+                        size="small"
+                        sx={{ color: '#00A3FF' }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleDeleteClick(quiz)}
+                        size="small"
+                        sx={{ color: '#EF4444' }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}
-              {totalFiltered === 0 && (
+              {!loading && totalFiltered === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                     <Typography color="text.secondary">Không tìm thấy bài kiểm tra nào phù hợp</Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                    <Typography color="text.secondary">Đang tải dữ liệu...</Typography>
                   </TableCell>
                 </TableRow>
               )}
@@ -285,6 +330,15 @@ const Quiz: React.FC = () => {
           </Box>
         </TableContainer>
       </Box>
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        itemName={selectedQuiz?.test_name}
+        title="Xóa bài kiểm tra"
+        message="Bạn có chắc chắn muốn xóa bài kiểm tra này? Hành động này sẽ xóa vĩnh viễn tất cả câu hỏi và kết quả liên quan."
+      />
     </Box>
   );
 };

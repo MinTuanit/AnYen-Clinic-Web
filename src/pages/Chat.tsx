@@ -27,13 +27,7 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ImageIcon from '@mui/icons-material/Image';
 import SendIcon from '@mui/icons-material/Send';
 
-// Mock data kept for Doctors tab if API not available
-const mockConversationsDoctors = [
-  { id: 101, name: 'BS. Nguyễn Minh Tuấn', avatar: 'https://i.pravatar.cc/150?u=101', status: 'Đang hoạt động', lastMsg: 'Chào đồng nghiệp, ca trực tối nay thế nào?', time: '09:00 AM', online: true, type: 'doctor' },
-  { id: 102, name: 'BS. Trần Thu Hà', avatar: 'https://i.pravatar.cc/150?u=102', status: 'Trong cuộc họp', lastMsg: 'Gửi tôi bệnh án của bệnh nhân An nhé.', time: 'HÔM QUA', online: false, type: 'doctor' },
-  { id: 103, name: 'BS. Lê Thị Mai', avatar: 'https://i.pravatar.cc/150?u=103', status: 'Ngoại tuyến', lastMsg: 'Ok, cảm ơn bác sĩ.', time: 'THỨ 6', online: false, type: 'doctor' },
-];
-
+// Chat component
 const Chat: React.FC = () => {
   const [tab, setTab] = useState(0);
   const [conversations, setConversations] = useState<any[]>([]);
@@ -93,8 +87,11 @@ const Chat: React.FC = () => {
     }
   };
 
-  const filteredConversations = tab === 0 ? conversations : mockConversationsDoctors;
-
+  const filteredConversations = conversations.filter((c: any) => {
+    const role = c.user1Info?.role_value;
+    if (tab === 0) return role === 'patient';
+    return role === 'doctor' || role === 'admin'; // Admin might chat with admin for support too
+  });
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', background: '#fff', overflow: 'hidden' }}>
@@ -141,7 +138,10 @@ const Chat: React.FC = () => {
             value={tab}
             onChange={(_, v) => {
               setTab(v);
-              const newFiltered = v === 0 ? conversations : mockConversationsDoctors;
+              const newFiltered = conversations.filter((c: any) => {
+                const role = c.user1Info?.role_value;
+                return v === 0 ? role === 'patient' : (role === 'doctor' || role === 'admin');
+              });
               if (newFiltered.length > 0) setActiveChat(newFiltered[0]);
               else setActiveChat(null);
             }}
@@ -198,10 +198,11 @@ const Chat: React.FC = () => {
                   primary={
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography sx={{ fontWeight: 700, color: '#1E293B', fontSize: 15 }}>
-                        {conv.name || conv.user1Info?.name || `User ${String(conv.user1).substring(0, 6)}`}
+                        {conv.user1Info?.role_value === 'doctor' ? 'BS. ' : ''}
+                        {conv.user1Info?.name || `User ${String(conv.user1).substring(0, 6)}`}
                       </Typography>
                       <Typography sx={{ fontSize: 11, color: '#94A3B8' }}>
-                        {conv.updatedAt ? new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : conv.time}
+                        {conv.updatedAt ? new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (conv.time || '')}
                       </Typography>
                     </Box>
                   }
@@ -245,7 +246,8 @@ const Chat: React.FC = () => {
                 <Avatar src={activeChat.avatar || activeChat.user1Info?.avatar_url} sx={{ width: 40, height: 40 }} />
                 <Box>
                   <Typography sx={{ fontWeight: 700, color: '#1E293B', fontSize: 16 }}>
-                    {activeChat.name || activeChat.user1Info?.name || `User ${String(activeChat.user1).substring(0, 6)}`}
+                    {activeChat.user1Info?.role_value === 'doctor' ? 'BS. ' : ''}
+                    {activeChat.user1Info?.name || `User ${String(activeChat.user1).substring(0, 6)}`}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <Box sx={{ width: 6, height: 6, borderRadius: '50%', background: activeChat.online || activeChat.user1Info?.active_status ? '#22C55E' : '#94A3B8' }} />
