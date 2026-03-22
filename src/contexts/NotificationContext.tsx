@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useCallback, ReactNode } from 'react';
 import { Snackbar, Alert, AlertColor } from '@mui/material';
 
 interface NotificationContextType {

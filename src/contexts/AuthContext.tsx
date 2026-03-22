@@ -54,12 +54,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [fetchUser]);
 
   const login = async (phoneNumber: string, password: string) => {
-    try {
-      const userData = await userService.login(phoneNumber, password);
-      setUser(userData);
-    } catch (error) {
-      throw error;
-    }
+    const userData = await userService.login(phoneNumber, password);
+    setUser(userData);
   };
 
   const logout = async () => {
@@ -71,12 +67,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      login, 
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
       logout,
-      isAuthenticated: !!user 
+      isAuthenticated: !!user
     }}>
       {children}
     </AuthContext.Provider>
