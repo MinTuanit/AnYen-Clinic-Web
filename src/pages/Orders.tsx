@@ -67,7 +67,9 @@ const Orders: React.FC = () => {
       const statuses = tab === 0 ? '' :
         tab === 1 ? 'Pending' :
           tab === 2 ? 'Delivering' :
-            tab === 3 ? 'Delivered' : 'Cancelled';
+            tab === 3 ? 'Delivered' :
+              tab === 4 ? 'Cancelled' :
+                tab === 5 ? 'Returning' : 'Returned';
 
       const data = await orderService.getAllOrders({ statuses });
       setOrders(data);
@@ -151,6 +153,24 @@ const Orders: React.FC = () => {
     }
   };
 
+  const handleApproveDelivering = async (orderId: string) => {
+    try {
+      await orderService.approveOrderToDelivering(orderId);
+      fetchOrders();
+    } catch (error) {
+      console.error('Error approving order:', error);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      await orderService.updateOrderStatus(orderId, OrderStatus.Cancelled);
+      fetchOrders();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC' }}>
       <Sidebar />
@@ -181,10 +201,10 @@ const Orders: React.FC = () => {
             >
               Xuất báo cáo
             </Button>
-            <ActionButton
+            {/* <ActionButton
               label="Tạo đơn mới"
               onClick={handleCreateOrder}
-            />
+            /> */}
           </Box>
         </Box>
 
@@ -199,10 +219,12 @@ const Orders: React.FC = () => {
             }}
           >
             <Tab label="Tất cả đơn hàng" />
-            <Tab label="Đang xử lý" />
+            <Tab label="Chờ xử lý" />
             <Tab label="Đang giao" />
             <Tab label="Hoàn thành" />
             <Tab label="Đã hủy" />
+            <Tab label="Đang trả hàng" />
+            <Tab label="Đã trả hàng" />
           </Tabs>
         </Box>
 
@@ -344,6 +366,16 @@ const Orders: React.FC = () => {
                     </TableCell>
                     <TableCell align="right">
                       <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                        {order.status === 'Pending' && (
+                          <>
+                            <IconButton size="small" title="Duyệt giao hàng" sx={{ color: '#27AE60' }} onClick={() => handleApproveDelivering(order.order_id)}>
+                              <CheckCircleOutlineIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" title="Hủy đơn" sx={{ color: '#EF4444' }} onClick={() => handleCancelOrder(order.order_id)}>
+                              <CancelOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </>
+                        )}
                         <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleViewOrder(order)}>
                           <VisibilityIcon fontSize="small" />
                         </IconButton>

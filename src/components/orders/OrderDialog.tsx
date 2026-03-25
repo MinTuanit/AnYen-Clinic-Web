@@ -107,7 +107,8 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
 
   const calculateTotal = () => {
     const fromPayment = order?.payment?.total_price ? Number(order.payment.total_price) : 0;
-    return fromPayment || Math.max(0, calculateSubtotal() - calculateDiscount());
+    if (fromPayment) return fromPayment;
+    return Math.max(0, calculateSubtotal() + 30000 - calculateDiscount());
   };
 
   const formatCurrency = (amount: number) => {
@@ -180,9 +181,10 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
                 slotProps={{ input: { startAdornment: <InputAdornment position="start"><Update sx={{ color: '#00A3FF' }} /></InputAdornment> } }}
               >
                 <MenuItem value="Pending">Chờ xử lý (Pending)</MenuItem>
-                <MenuItem value="Processing">Đang chuẩn bị (Processing)</MenuItem>
                 <MenuItem value="Delivering">Đang giao hàng (Delivering)</MenuItem>
-                <MenuItem value="Completed">Đã hoàn thành (Completed)</MenuItem>
+                <MenuItem value="Delivered">Đã hoàn thành (Delivered)</MenuItem>
+                <MenuItem value="Returning">Đang trả hàng (Returning)</MenuItem>
+                <MenuItem value="Returned">Đã trả hàng (Returned)</MenuItem>
                 <MenuItem value="Cancelled">Đã hủy (Cancelled)</MenuItem>
               </TextField>
             </Grid>
@@ -221,6 +223,10 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2" color="#64748B">Tạm tính:</Typography>
                   <Typography variant="body2" fontWeight={600} color="#1E293B">{formatCurrency(calculateSubtotal())}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="#64748B">Phí vận chuyển:</Typography>
+                  <Typography variant="body2" fontWeight={600} color="#1E293B">+{formatCurrency(30000)}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2" color="#64748B">Giảm giá {formData.voucher && `(${formData.voucher.code})`}:</Typography>

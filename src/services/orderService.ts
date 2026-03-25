@@ -28,7 +28,7 @@ export const orderService = {
   },
 
   updateOrderStatus: async (orderId: string, status: OrderStatus): Promise<any> => {
-    const response = await apiClient.put(`/admin/order/status/${orderId}`, { status });
+    const response = await apiClient.put(`/admin/order/${orderId}`, { status });
     return response.data;
   },
 
@@ -43,12 +43,12 @@ export const orderService = {
   },
 
   approveOrderToDelivering: async (orderId: string): Promise<any> => {
-    const response = await apiClient.post(`/admin/order/approve-delivering/${orderId}`);
+    const response = await apiClient.patch(`/admin/order/${orderId}/approve-delivering`);
     return response.data;
   },
 
   approveOrderToReturning: async (orderId: string): Promise<any> => {
-    const response = await apiClient.post(`/admin/order/approve-returning/${orderId}`);
+    const response = await apiClient.patch(`/admin/order/${orderId}/approve-returning`);
     return response.data;
   },
 
