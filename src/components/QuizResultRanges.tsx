@@ -77,7 +77,10 @@ const QuizResultRanges: React.FC<QuizResultRangesProps> = ({
                         type="number"
                         size="small"
                         value={range.minScore}
-                        onChange={(e) => onUpdateRange(scale.name, range.id, 'minScore', parseInt(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          onUpdateRange(scale.name, range.id, 'minScore', val === '' ? '' : parseInt(val));
+                        }}
                         sx={{ width: 80, '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                       />
                       <Typography variant="body2" color="text.secondary">đến</Typography>
@@ -85,7 +88,10 @@ const QuizResultRanges: React.FC<QuizResultRangesProps> = ({
                         type="number"
                         size="small"
                         value={range.maxScore}
-                        onChange={(e) => onUpdateRange(scale.name, range.id, 'maxScore', parseInt(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          onUpdateRange(scale.name, range.id, 'maxScore', val === '' ? '' : parseInt(val));
+                        }}
                         sx={{ width: 80, '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                       />
                       <Typography variant="body2" color="text.secondary">điểm</Typography>

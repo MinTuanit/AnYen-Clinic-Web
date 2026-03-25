@@ -102,11 +102,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
                   label="Điểm"
                   value={opt.score}
                   onChange={(e) => onOptionScoreChange(question.id, optIdx, e.target.value)}
-                  onBlur={() => {
-                    if (opt.score === ('' as any)) {
-                      onOptionScoreChange(question.id, optIdx, '0');
-                    }
-                  }}
+                  inputProps={{ min: 0 }}
                   sx={{ width: 70, '& .MuiOutlinedInput-root': { borderRadius: '10px', background: '#F8FAFC' } }}
                 />
                 <IconButton

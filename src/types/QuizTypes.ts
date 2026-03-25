@@ -1,13 +1,13 @@
 export interface Answer {
   text: string;
-  score: number;
+  score: number | string;
 }
 
 export interface ScoreRange {
   id: number;
   label: string;
-  minScore: number;
-  maxScore: number;
+  minScore: number | string;
+  maxScore: number | string;
   feedbackText: string;
 }
 

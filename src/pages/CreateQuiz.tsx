@@ -143,7 +143,7 @@ const CreateQuiz: React.FC = () => {
         const newId = s.ranges.length > 0 ? Math.max(...s.ranges.map(r => r.id)) + 1 : 1;
         return {
           ...s,
-          ranges: [...s.ranges, { id: newId, label: 'Mức độ mới', minScore: 0, maxScore: 0, feedbackText: '' }]
+          ranges: [...s.ranges, { id: newId, label: 'Mức độ mới', minScore: '', maxScore: '', feedbackText: '' }]
         };
       }
       return s;
@@ -178,10 +178,10 @@ const CreateQuiz: React.FC = () => {
       text: '',
       scale: scales[0]?.name || '',
       options: [
-        { text: '', score: 0 },
-        { text: '', score: 0 },
-        { text: '', score: 0 },
-        { text: '', score: 0 }
+        { text: '', score: '' },
+        { text: '', score: '' },
+        { text: '', score: '' },
+        { text: '', score: '' }
       ]
     }]);
   };
@@ -203,7 +203,7 @@ const CreateQuiz: React.FC = () => {
       if (q.id === qId) {
         return {
           ...q,
-          options: [...q.options, { text: '', score: 0 }]
+          options: [...q.options, { text: '', score: '' }]
         };
       }
       return q;
@@ -234,24 +234,14 @@ const CreateQuiz: React.FC = () => {
   };
 
   const handleOptionScoreChange = (qId: number, optIdx: number, value: string) => {
-    if (value === '') {
-      setQuestions(questions.map(q => {
-        if (q.id === qId) {
-          const newOptions = [...q.options];
-          newOptions[optIdx] = { ...newOptions[optIdx], score: '' as any };
-          return { ...q, options: newOptions };
-        }
-        return q;
-      }));
-      return;
-    }
-
-    const score = parseInt(value);
-    if (isNaN(score)) return;
-
     setQuestions(questions.map(q => {
       if (q.id === qId) {
         const newOptions = [...q.options];
+        // Handle empty string and strip leading zeros for positive numbers
+        let score: string | number = value;
+        if (value !== '' && !isNaN(parseInt(value))) {
+          score = parseInt(value);
+        }
         newOptions[optIdx] = { ...newOptions[optIdx], score };
         return { ...q, options: newOptions };
       }
