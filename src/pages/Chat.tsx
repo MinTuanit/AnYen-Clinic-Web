@@ -26,14 +26,17 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ImageIcon from '@mui/icons-material/Image';
 import SendIcon from '@mui/icons-material/Send';
+import CloseIcon from '@mui/icons-material/Close';
 
-// Chat component
 const Chat: React.FC = () => {
   const [tab, setTab] = useState(0);
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeChat, setActiveChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { user } = useAuth();
 
   const fetchMessages = async (convId: string) => {
@@ -72,25 +75,67 @@ const Chat: React.FC = () => {
   }, [activeChat]);
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !activeChat) return;
+    if ((!message.trim() && !selectedFile) || !activeChat) return;
     try {
-      const res = await chatService.sendMessageText({
-        conversation_id: activeChat.id,
-        content: message
-      });
-      if (res.err === 0) {
-        setMessage('');
-        fetchMessages(activeChat.id);
+      if (selectedFile) {
+        await chatService.sendImage(activeChat.id, selectedFile);
+        setSelectedFile(null);
+        setPreviewUrl(null);
       }
+      
+      if (message.trim()) {
+        const res = await chatService.sendMessageText({
+          conversation_id: activeChat.id,
+          content: message
+        });
+        if (res.err === 0) {
+          setMessage('');
+        }
+      }
+      
+      fetchMessages(activeChat.id);
     } catch (error) {
       console.error('Failed to send message:', error);
     }
   };
 
+  const handleSendImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeChat) return;
+    
+    // Set preview
+    setSelectedFile(file);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    
+    // Clear input so same file can be selected again
+    e.target.value = '';
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+  };
+
+  const handleVideoCall = async () => {
+    if (!activeChat) return;
+    try {
+      await chatService.startVideoCall(activeChat.id);
+      fetchMessages(activeChat.id);
+    } catch (error) {
+      console.error('Failed to start video call:', error);
+    }
+  };
+
   const filteredConversations = conversations.filter((c: any) => {
     const role = c.user1Info?.role_value;
+    const name = (c.user1Info?.name || '').toLowerCase();
+    const matchesSearch = name.includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
     if (tab === 0) return role === 'patient';
-    return role === 'doctor' || role === 'admin'; // Admin might chat with admin for support too
+    return role === 'doctor' || role === 'admin';
   });
 
   return (
@@ -113,6 +158,8 @@ const Chat: React.FC = () => {
             fullWidth
             placeholder="Tìm kiếm cuộc trò chuyện..."
             size="small"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             sx={{
               '& .MuiOutlinedInput-root': {
                 background: '#F1F5F9',
@@ -140,6 +187,9 @@ const Chat: React.FC = () => {
               setTab(v);
               const newFiltered = conversations.filter((c: any) => {
                 const role = c.user1Info?.role_value;
+                const name = (c.user1Info?.name || '').toLowerCase();
+                const matchesSearch = name.includes(searchQuery.toLowerCase());
+                if (!matchesSearch) return false;
                 return v === 0 ? role === 'patient' : (role === 'doctor' || role === 'admin');
               });
               if (newFiltered.length > 0) setActiveChat(newFiltered[0]);
@@ -259,7 +309,7 @@ const Chat: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <IconButton sx={{ color: '#64748B' }}><PhoneIcon fontSize="small" /></IconButton>
-                <IconButton sx={{ color: '#64748B' }}><VideocamIcon fontSize="small" /></IconButton>
+                <IconButton sx={{ color: '#64748B' }} onClick={handleVideoCall}><VideocamIcon fontSize="small" /></IconButton>
                 <IconButton sx={{ color: '#64748B' }}><MoreVertIcon fontSize="small" /></IconButton>
               </Box>
             </Box>
@@ -297,16 +347,35 @@ const Chat: React.FC = () => {
                       <Paper
                         elevation={0}
                         sx={{
-                          p: '12px 16px',
+                          p: msg.message_type === 'image' ? '4px' : '12px 16px',
                           borderRadius: isMine ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
                           background: isMine ? '#00A3FF' : '#fff',
                           color: isMine ? '#fff' : '#1E293B',
-                          boxShadow: isMine ? 'none' : '0 1px 2px rgba(0,0,0,0.05)'
+                          boxShadow: isMine ? 'none' : '0 1px 2px rgba(0,0,0,0.05)',
+                          overflow: 'hidden'
                         }}
                       >
-                        <Typography sx={{ fontSize: 14, lineHeight: 1.5 }}>
-                          {msg.content}
-                        </Typography>
+                        {msg.message_type === 'image' ? (
+                          <Box
+                            component="img"
+                            src={msg.content}
+                            sx={{
+                              maxWidth: '100%',
+                              maxHeight: '300px',
+                              borderRadius: '12px',
+                              display: 'block'
+                            }}
+                          />
+                        ) : msg.message_type === 'call' ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <VideocamIcon fontSize="small" />
+                            <Typography sx={{ fontSize: 14 }}>{msg.content}</Typography>
+                          </Box>
+                        ) : (
+                          <Typography sx={{ fontSize: 14, lineHeight: 1.5 }}>
+                            {msg.content}
+                          </Typography>
+                        )}
                       </Paper>
                       <Typography sx={{ fontSize: 10, color: '#94A3B8', mt: 0.5, textAlign: isMine ? 'right' : 'left' }}>
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -321,6 +390,36 @@ const Chat: React.FC = () => {
 
         {/* Message Input */}
         <Box sx={{ p: 3, pt: 0 }}>
+          {previewUrl && (
+            <Box sx={{ position: 'relative', display: 'inline-block', mb: 1, ml: 2 }}>
+              <Box
+                component="img"
+                src={previewUrl}
+                sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '12px',
+                  objectFit: 'cover',
+                  border: '2px solid #00A3FF'
+                }}
+              />
+              <IconButton
+                size="small"
+                onClick={removeSelectedImage}
+                sx={{
+                  position: 'absolute',
+                  top: -8,
+                  right: -8,
+                  background: '#1E293B',
+                  color: '#fff',
+                  padding: '2px',
+                  '&:hover': { background: '#000' }
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Box>
+          )}
           <Box sx={{
             display: 'flex',
             alignItems: 'center',
@@ -330,13 +429,30 @@ const Chat: React.FC = () => {
             borderRadius: '16px'
           }}>
             <IconButton size="small" sx={{ color: '#64748B' }}><AddCircleIcon /></IconButton>
-            <IconButton size="small" sx={{ color: '#64748B' }}><ImageIcon /></IconButton>
+            <input
+              type="file"
+              id="image-input"
+              hidden
+              accept="image/*"
+              onChange={handleSendImage}
+            />
+            <label htmlFor="image-input">
+              <IconButton size="small" sx={{ color: '#64748B' }} component="span">
+                <ImageIcon />
+              </IconButton>
+            </label>
             <TextField
               fullWidth
               placeholder="Nhập tin nhắn..."
               variant="standard"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
               sx={{
                 mx: 1,
                 '& .MuiInput-root': { fontSize: 14, color: '#1E293B' },

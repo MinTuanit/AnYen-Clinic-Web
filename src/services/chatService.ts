@@ -23,9 +23,9 @@ export const chatService = {
 
   sendImage: async (conversationId: string, file: File): Promise<any> => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('message', file); // Backend uses 'message' for file upload
     formData.append('conversation_id', conversationId);
-    const response = await apiClient.post('/chat/send-image', formData, {
+    const response = await apiClient.post('/chat/conversation/send-images', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
@@ -33,10 +33,19 @@ export const chatService = {
 
   sendAudio: async (conversationId: string, file: File): Promise<any> => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('message', file); // Backend uses 'message' for file upload
     formData.append('conversation_id', conversationId);
-    const response = await apiClient.post('/chat/send-audio', formData, {
+    const response = await apiClient.post('/chat/conversation/send-audios', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  startVideoCall: async (conversationId: string): Promise<any> => {
+    const response = await apiClient.post('/chat/send-message-text', {
+      conversation_id: conversationId,
+      content: 'Video Call Started',
+      message_type: 'call'
     });
     return response.data;
   },
