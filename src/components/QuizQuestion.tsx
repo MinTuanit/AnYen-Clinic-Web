@@ -103,7 +103,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
                   value={opt.score}
                   onChange={(e) => onOptionScoreChange(question.id, optIdx, e.target.value)}
                   inputProps={{ min: 0 }}
-                  sx={{ width: 70, '& .MuiOutlinedInput-root': { borderRadius: '10px', background: '#F8FAFC' } }}
+                  sx={{ width: 80, '& .MuiOutlinedInput-root': { borderRadius: '10px', background: '#F8FAFC' } }}
                 />
                 <IconButton
                   size="small"

@@ -377,7 +377,7 @@ const CreateQuiz: React.FC = () => {
                   placeholder="VD: Đánh giá mức độ trầm cảm (PHQ-9)"
                   value={testName}
                   onChange={(e) => setTestName(e.target.value)}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', background: '#F8FAFC' } }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', background: '#F8FAFC', fontSize: '1.1rem' } }}
                 />
               </Box>
               <Box>
