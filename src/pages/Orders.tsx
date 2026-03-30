@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
-import ActionButton from '../components/ActionButton';
 import {
   Box,
   Typography,
@@ -112,11 +111,6 @@ const Orders: React.FC = () => {
   const handleTabChange = (_: any, val: number) => {
     setTab(val);
     setPage(1);
-  };
-
-  const handleCreateOrder = () => {
-    setSelectedOrder(null);
-    setIsOrderDialogOpen(true);
   };
 
   const handleViewOrder = (order: Order) => {

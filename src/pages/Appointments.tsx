@@ -10,7 +10,6 @@ import {
   InputAdornment,
   Tabs,
   Tab,
-  Avatar,
   IconButton,
   Table,
   TableBody,
@@ -63,7 +62,7 @@ const AppointmentPage: React.FC = () => {
   const [commissionRate, setCommissionRate] = useState<string>('20.0');
   const [selectedAppointmentForPayment, setSelectedAppointmentForPayment] = useState<Appointment | null>(null);
   const [paying, setPaying] = useState(false);
-  
+
   const { showNotification } = useNotification();
 
   const fetchAppointments = async () => {
@@ -131,7 +130,7 @@ const AppointmentPage: React.FC = () => {
 
   const handleConfirmPayment = async () => {
     if (!selectedAppointmentForPayment) return;
-    
+
     setPaying(true);
     try {
       const rate = parseFloat(commissionRate) / 100;
@@ -139,7 +138,7 @@ const AppointmentPage: React.FC = () => {
         selectedAppointmentForPayment.id,
         rate
       );
-      
+
       if (response.err === 0) {
         showNotification('Thanh toán cho bác sĩ thành công', 'success');
         setPaymentDialogOpen(false);
@@ -275,20 +274,20 @@ const AppointmentPage: React.FC = () => {
                     </TableCell>
                     <TableCell align="right">
                       <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                        {app.status === 'Completed' && 
-                         app.payment?.payment_status === 'Paid' && 
-                         app.doctor_payment_status === 'Unpaid' && 
-                         app.doctor?.paypal_verified && 
-                         app.doctor?.paypal_email && (
-                          <IconButton 
-                            size="small" 
-                            sx={{ color: '#22C55E' }} 
-                            onClick={() => handlePaymentClick(app)} 
-                            title="Thanh toán cho bác sĩ"
-                          >
-                            <PaymentsIcon fontSize="small" />
-                          </IconButton>
-                        )}
+                        {app.status === 'Completed' &&
+                          app.payment?.payment_status === 'Paid' &&
+                          app.doctor_payment_status === 'Unpaid' &&
+                          app.doctor?.paypal_verified &&
+                          app.doctor?.paypal_email && (
+                            <IconButton
+                              size="small"
+                              sx={{ color: '#22C55E' }}
+                              onClick={() => handlePaymentClick(app)}
+                              title="Thanh toán cho bác sĩ"
+                            >
+                              <PaymentsIcon fontSize="small" />
+                            </IconButton>
+                          )}
                         <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditAppointment(app)}>
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -365,10 +364,10 @@ const AppointmentPage: React.FC = () => {
             />
           </DialogContent>
           <DialogActions sx={{ p: 3, pt: 1 }}>
-            <Button 
-                onClick={() => setPaymentDialogOpen(false)} 
-                disabled={paying}
-                sx={{ textTransform: 'none', borderRadius: '10px', fontWeight: 600 }}
+            <Button
+              onClick={() => setPaymentDialogOpen(false)}
+              disabled={paying}
+              sx={{ textTransform: 'none', borderRadius: '10px', fontWeight: 600 }}
             >
               Hủy
             </Button>

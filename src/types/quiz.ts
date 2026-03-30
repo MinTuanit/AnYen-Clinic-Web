@@ -1,5 +1,3 @@
-import { Question } from './QuizTypes';
-
 export interface Quiz {
   test_id: string;
   title: string;

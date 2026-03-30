@@ -39,7 +39,7 @@ export const appointmentService = {
       status: 'Canceled',
       doctor_id: appointment.doctor?.doctor_id,
       appointment_id: appointment.id,
-      cancel_reason: appointment.cancelReason,
+      cancel_reason: appointment.cancel_reason,
     });
   },
 
