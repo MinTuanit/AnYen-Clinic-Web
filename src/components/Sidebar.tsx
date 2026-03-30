@@ -49,9 +49,10 @@ const Sidebar: React.FC = () => {
       <Box>
         {/* Logo */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, mb: 4 }}>
-          <Avatar sx={{ bgcolor: '#00A3FF', width: 36, height: 36, borderRadius: '8px' }}>
-            <Typography fontWeight={900} fontSize={20} color="#fff">A</Typography>
-          </Avatar>
+          <Avatar 
+            src="/images/app_icon.png" 
+            sx={{ width: 36, height: 36, borderRadius: '8px', bgcolor: 'transparent' }} 
+          />
           <Box>
             <Typography fontWeight={700} fontSize={16} lineHeight={1.2}>AnYen</Typography>
             <Typography fontSize={12} color="text.secondary">Clinic - Admin</Typography>
