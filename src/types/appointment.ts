@@ -3,9 +3,10 @@ import { Doctor } from './doctor';
 
 export interface Payment {
   id: string;
-  amount: number;
-  method: string;
-  status: string;
+  total_price: number;
+  total_paid: number;
+  payment_method: string;
+  payment_status: string;
   createdAt: string;
 }
 
@@ -27,8 +28,8 @@ export interface Appointment {
   id: string;
   patient?: Patient;
   doctor?: Doctor;
-  appointmentDate?: string;
-  appointmentTime?: string;
+  appointment_date?: string;
+  appointment_time?: string;
   question?: string;
   status?: string;
   cancelReason?: string;
@@ -38,7 +39,7 @@ export interface Appointment {
   payment?: Payment;
   review?: Review;
   paymentAmount?: string; // Using string for BigInt representation
-  doctorPaymentStatus?: string;
+  doctor_payment_status?: string;
   commissionRate?: number;
   prescriptions?: Prescription[];
   paidAt?: string;

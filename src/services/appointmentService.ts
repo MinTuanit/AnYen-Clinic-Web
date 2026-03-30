@@ -15,8 +15,8 @@ export const appointmentService = {
   editAppointmentTime: async (appointment: Appointment) => {
     return apiClient.patch('/admin/edit-appointment', {
       appointment_id: appointment.id,
-      appointment_time: appointment.appointmentTime,
-      appointment_date: appointment.appointmentDate,
+      appointment_time: appointment.appointment_time,
+      appointment_date: appointment.appointment_date,
     });
   },
 

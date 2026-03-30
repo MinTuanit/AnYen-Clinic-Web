@@ -30,7 +30,16 @@ import AppointmentDialog from '../components/appointments/AppointmentDialog';
 import DeleteConfirmDialog from '../components/doctors/DeleteConfirmDialog';
 
 import { appointmentService } from '../services/appointmentService';
+import { paymentService } from '../services/paymentService';
 import { Appointment } from '../types/appointment';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import { useNotification } from '../contexts/useNotification';
 
 const statusStyles: Record<string, { bg: string, color: string }> = {
   Wait: { bg: '#FFF7ED', color: '#F97316' },
@@ -50,6 +59,12 @@ const AppointmentPage: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [commissionRate, setCommissionRate] = useState<string>('20.0');
+  const [selectedAppointmentForPayment, setSelectedAppointmentForPayment] = useState<Appointment | null>(null);
+  const [paying, setPaying] = useState(false);
+  
+  const { showNotification } = useNotification();
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -105,6 +120,37 @@ const AppointmentPage: React.FC = () => {
       setDeleteDialogOpen(false);
     } catch (error) {
       console.error('Error deleting appointment:', error);
+    }
+  };
+
+  const handlePaymentClick = (app: Appointment) => {
+    setSelectedAppointmentForPayment(app);
+    setCommissionRate('20.0'); // Default 20%
+    setPaymentDialogOpen(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedAppointmentForPayment) return;
+    
+    setPaying(true);
+    try {
+      const rate = parseFloat(commissionRate) / 100;
+      const response = await paymentService.payDoctorByAppointment(
+        selectedAppointmentForPayment.id,
+        rate
+      );
+      
+      if (response.err === 0) {
+        showNotification('Thanh toán cho bác sĩ thành công', 'success');
+        setPaymentDialogOpen(false);
+        fetchAppointments();
+      } else {
+        showNotification(response.msg || 'Có lỗi xảy ra khi thanh toán', 'error');
+      }
+    } catch (error: any) {
+      showNotification(error.response?.data?.msg || 'Có lỗi xảy ra khi thanh toán', 'error');
+    } finally {
+      setPaying(false);
     }
   };
   const pageSize = 10;
@@ -212,8 +258,8 @@ const AppointmentPage: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: '#475569', fontSize: 14 }}>{app.doctor?.user?.name}</TableCell>
-                    <TableCell sx={{ color: '#475569', fontSize: 14 }}>{app.appointmentDate ? new Date(app.appointmentDate).toLocaleDateString('vi-VN') : 'N/A'}</TableCell>
-                    <TableCell sx={{ color: '#475569', fontSize: 14 }}>{app.appointmentTime}</TableCell>
+                    <TableCell sx={{ color: '#475569', fontSize: 14 }}>{app.appointment_date ? new Date(app.appointment_date).toLocaleDateString('vi-VN') : 'N/A'}</TableCell>
+                    <TableCell sx={{ color: '#475569', fontSize: 14 }}>{app.appointment_time}</TableCell>
                     <TableCell>
                       <Chip
                         label={app.status}
@@ -229,6 +275,20 @@ const AppointmentPage: React.FC = () => {
                     </TableCell>
                     <TableCell align="right">
                       <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                        {app.status === 'Completed' && 
+                         app.payment?.payment_status === 'Paid' && 
+                         app.doctor_payment_status === 'Unpaid' && 
+                         app.doctor?.paypal_verified && 
+                         app.doctor?.paypal_email && (
+                          <IconButton 
+                            size="small" 
+                            sx={{ color: '#22C55E' }} 
+                            onClick={() => handlePaymentClick(app)} 
+                            title="Thanh toán cho bác sĩ"
+                          >
+                            <PaymentsIcon fontSize="small" />
+                          </IconButton>
+                        )}
                         <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditAppointment(app)}>
                           <EditIcon fontSize="small" />
                         </IconButton>
@@ -276,6 +336,59 @@ const AppointmentPage: React.FC = () => {
           onConfirm={handleConfirmDelete}
           itemName={`Lịch hẹn #${selectedAppointment?.id}`}
         />
+
+        {/* Payment Dialog */}
+        <Dialog open={paymentDialogOpen} onClose={() => !paying && setPaymentDialogOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 700, px: 3, pt: 3 }}>Thanh toán cho bác sĩ</DialogTitle>
+          <DialogContent sx={{ px: 3 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Vui lòng nhập phần trăm chiết khấu cho bác sĩ ({selectedAppointmentForPayment?.doctor?.user?.name}).
+            </Typography>
+            <TextField
+              fullWidth
+              label="Tỷ lệ chiết khấu (%)"
+              value={commissionRate}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                  setCommissionRate(val);
+                }
+              }}
+              variant="outlined"
+              size="small"
+              autoFocus
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '10px'
+                }
+              }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 3, pt: 1 }}>
+            <Button 
+                onClick={() => setPaymentDialogOpen(false)} 
+                disabled={paying}
+                sx={{ textTransform: 'none', borderRadius: '10px', fontWeight: 600 }}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleConfirmPayment}
+              disabled={paying}
+              sx={{
+                textTransform: 'none',
+                borderRadius: '10px',
+                fontWeight: 600,
+                boxShadow: 'none',
+                background: '#00A3FF',
+                '&:hover': { background: '#0081CC' }
+              }}
+            >
+              {paying ? <CircularProgress size={20} color="inherit" /> : 'Xác nhận thanh toán'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Box>
   );

@@ -265,7 +265,7 @@ const Drugs: React.FC = () => {
                         }}
                       />
                     </TableCell>
-                    <TableCell sx={{ color: '#475569', fontWeight: 500 }}>{d.unit || 'Viên'}</TableCell>
+                    <TableCell sx={{ color: '#475569', fontWeight: 500 }}>{d.unit || ''}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 140 }}>
                         <Box sx={{ flex: 1 }}>
