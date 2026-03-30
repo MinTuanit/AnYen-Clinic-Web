@@ -19,15 +19,7 @@ import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import { doctorService } from '../services/doctorService';
 import { patientService } from '../services/patientService';
 import { appointmentService } from '../services/appointmentService';
-
-const barData = [
-  { month: 'Tháng 1', revenue: 420 },
-  { month: 'Tháng 2', revenue: 380 },
-  { month: 'Tháng 3', revenue: 510 },
-  { month: 'Tháng 4', revenue: 460 },
-  { month: 'Tháng 5', revenue: 720 },
-  { month: 'Tháng 6', revenue: 590 },
-];
+import { orderService } from '../services/orderService';
 
 const CustomBar = (props: any) => {
   const { x, y, width, height, fill } = props;
@@ -42,24 +34,26 @@ const Dashboard: React.FC = () => {
     patientCount: '0',
     newAppointments: '0'
   });
+  const [monthRange, setMonthRange] = useState(6);
+  const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [monthRange]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [doctors, patients, appointments] = await Promise.all([
+      const [doctors, patients, appointments, orders] = await Promise.all([
         doctorService.getAllDoctors(),
         patientService.getAllPatients(),
-        appointmentService.getAllAppointmentAdmin()
+        appointmentService.getAllAppointmentAdmin(),
+        orderService.getAllOrders()
       ]);
 
-      const totalRev = appointments.reduce((sum: number, app: any) => {
-        // Simple calculation: sum of all paid payments
-        return sum + (app.payment?.total_paid || 0);
-      }, 0);
+      const totalRev = 
+        appointments.reduce((sum: number, app: any) => sum + Number(app.payment?.total_paid || 0), 0) +
+        orders.reduce((sum: number, order: any) => sum + Number(order.payment?.total_paid || 0), 0);
 
       setStatsData({
         totalRevenue: new Intl.NumberFormat('vi-VN').format(totalRev),
@@ -67,6 +61,39 @@ const Dashboard: React.FC = () => {
         patientCount: patients.length.toString(),
         newAppointments: appointments.filter((app: any) => app.status === 'Pending').length.toString()
       });
+
+      // Generate chart data for last monthRange months
+      const months: any[] = [];
+      const today = new Date();
+      
+      for (let i = monthRange - 1; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const monthLabel = `Tháng ${d.getMonth() + 1}`;
+        
+        const monthlyAppRevenue = appointments
+          .filter((app: any) => {
+            const appDate = new Date(app.appointment_date || app.createdAt);
+            return appDate.getMonth() === d.getMonth() && appDate.getFullYear() === d.getFullYear();
+          })
+          .reduce((sum: number, app: any) => sum + Number(app.payment?.total_paid || 0), 0);
+
+        const monthlyOrderRevenue = orders
+          .filter((order: any) => {
+            const orderDate = new Date(order.createdAt);
+            return orderDate.getMonth() === d.getMonth() && orderDate.getFullYear() === d.getFullYear();
+          })
+          .reduce((sum: number, order: any) => sum + Number(order.payment?.total_paid || 0), 0);
+        
+        months.push({
+          month: monthLabel,
+          revenue: (monthlyAppRevenue + monthlyOrderRevenue) / 1000, // Show in 'k' or 'M' for scaling?
+          // I will use total but for visualization k might be better. 
+          // Let's use total but tooltip can format.
+          actualRevenue: monthlyAppRevenue + monthlyOrderRevenue
+        });
+      }
+      setChartData(months);
+
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     } finally {
@@ -135,22 +162,28 @@ const Dashboard: React.FC = () => {
             <Paper sx={{ p: 2.5, borderRadius: 3, boxShadow: 'none', background: '#fff' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography fontWeight={700} fontSize={15}>Biểu đồ doanh thu theo tháng</Typography>
-                <Select size="small" defaultValue="6" sx={{ fontSize: 13, height: 32 }}>
+                <Select 
+                  size="small" 
+                  value={monthRange.toString()} 
+                  onChange={(e) => setMonthRange(Number(e.target.value))}
+                  sx={{ fontSize: 13, height: 32 }}
+                >
                   <MenuItem value="6">6 tháng qua</MenuItem>
                   <MenuItem value="12">12 tháng qua</MenuItem>
                 </Select>
               </Box>
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={barData} barCategoryGap="30%" barGap={8}>
+                <BarChart data={chartData} barCategoryGap="30%" barGap={8}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 14, fill: '#8A9BB2' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 13, fill: '#8A9BB2' }} axisLine={false} tickLine={false} width={36} />
+                  <YAxis tick={{ fontSize: 13, fill: '#8A9BB2' }} axisLine={false} tickLine={false} width={45} />
                   <Tooltip
                     contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 14 }}
+                    formatter={(value: any) => [new Intl.NumberFormat('vi-VN').format(Number(value) * 1000) + ' đ', 'Doanh thu']}
                   />
                   <Bar dataKey="revenue" shape={<CustomBar />}>
-                    {barData.map((entry, idx) => (
-                      <Cell key={`bar-${idx}`} fill={entry.month === 'Tháng 5' ? '#2D9CDB' : '#D6EEFF'} />
+                    {chartData.map((_, idx) => (
+                      <Cell key={`bar-${idx}`} fill={idx === chartData.length - 1 ? '#2D9CDB' : '#D6EEFF'} />
                     ))}
                   </Bar>
                 </BarChart>
