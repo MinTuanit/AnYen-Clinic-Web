@@ -38,14 +38,14 @@ export interface AppointmentFormData {
   id?: string;
   patient_id: string;
   doctor_id: string;
-  appointmentDate: string;
-  appointmentTime: string;
+  appointment_date: string;
+  appointment_time: string;
   question: string;
   status: string;
   description: string;
-  noteForAdmin: string;
-  commissionRate: number;
-  doctorPaymentStatus: string;
+  note_for_admin: string;
+  commission_rate: number;
+  doctor_payment_status: string;
 }
 
 const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, onSave, appointment }) => {
@@ -54,14 +54,14 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
   const [formData, setFormData] = useState<AppointmentFormData>({
     patient_id: '',
     doctor_id: '',
-    appointmentDate: new Date().toISOString().split('T')[0],
-    appointmentTime: '08:00',
+    appointment_date: new Date().toISOString().split('T')[0],
+    appointment_time: '08:00',
     question: '',
     status: 'Pending',
     description: '',
-    noteForAdmin: '',
-    commissionRate: 0.2,
-    doctorPaymentStatus: 'Unpaid'
+    note_for_admin: '',
+    commission_rate: 0.2,
+    doctor_payment_status: 'Unpaid'
   });
 
   useEffect(() => {
@@ -87,27 +87,27 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
           id: appointment.id,
           patient_id: appointment.patient?.patient_id || appointment.patient?.patientId || '',
           doctor_id: appointment.doctor?.doctor_id || '',
-          appointmentDate: appointment.appointmentDate || '',
-          appointmentTime: appointment.appointmentTime || '',
+          appointment_date: appointment.appointment_date || '',
+          appointment_time: appointment.appointment_time || '',
           question: appointment.question || '',
           status: appointment.status || 'Pending',
           description: appointment.description || '',
-          noteForAdmin: appointment.noteForAdmin || '',
-          commissionRate: appointment.commissionRate || 0.2,
-          doctorPaymentStatus: appointment.doctorPaymentStatus || 'Unpaid'
+          note_for_admin: appointment.note_for_admin || '',
+          commission_rate: appointment.commission_rate || 0.2,
+          doctor_payment_status: appointment.doctor_payment_status || 'Unpaid'
         });
       } else {
         setFormData({
           patient_id: '',
           doctor_id: '',
-          appointmentDate: new Date().toISOString().split('T')[0],
-          appointmentTime: '08:00',
+          appointment_date: new Date().toISOString().split('T')[0],
+          appointment_time: '08:00',
           question: '',
           status: 'Pending',
           description: '',
-          noteForAdmin: '',
-          commissionRate: 0.2,
-          doctorPaymentStatus: 'Unpaid'
+          note_for_admin: '',
+          commission_rate: 0.2,
+          doctor_payment_status: 'Unpaid'
         });
       }
     }
@@ -190,8 +190,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
             <TextField
               fullWidth
               type="date"
-              name="appointmentDate"
-              value={formData.appointmentDate}
+              name="appointment_date"
+              value={formData.appointment_date}
               onChange={handleChange}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><CalendarToday sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             />
@@ -204,8 +204,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
             <TextField
               fullWidth
               type="time"
-              name="appointmentTime"
-              value={formData.appointmentTime}
+              name="appointment_time"
+              value={formData.appointment_time}
               onChange={handleChange}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><AccessTime sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
             />
@@ -254,8 +254,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
             <TextField
               fullWidth
               type="number"
-              name="commissionRate"
-              value={formData.commissionRate}
+              name="commission_rate"
+              value={formData.commission_rate}
               onChange={handleChange}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
               inputProps={{ step: 0.1, min: 0, max: 1 }}
@@ -270,8 +270,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
             <TextField
               select
               fullWidth
-              name="doctorPaymentStatus"
-              value={formData.doctorPaymentStatus}
+              name="doctor_payment_status"
+              value={formData.doctor_payment_status}
               onChange={handleChange}
             >
               <MenuItem value="Unpaid">Chưa trả (Unpaid)</MenuItem>
@@ -303,8 +303,8 @@ const AppointmentDialog: React.FC<AppointmentDialogProps> = ({ open, onClose, on
               fullWidth
               multiline
               rows={2}
-              name="noteForAdmin"
-              value={formData.noteForAdmin}
+              name="note_for_admin"
+              value={formData.note_for_admin}
               onChange={handleChange}
               placeholder="Thông tin nội bộ..."
               slotProps={{ input: { startAdornment: <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}><Notes sx={{ color: '#94A3B8' }} /></InputAdornment> } }}

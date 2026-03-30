@@ -156,7 +156,8 @@ const AppointmentPage: React.FC = () => {
   const pageSize = 10;
 
   const filteredAppointments = appointments.filter(app => {
-    const searchMatch = (app.patient?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const patientName = app.patient?.anonymous_name || app.patient?.name || '';
+    const searchMatch = patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (app.doctor?.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.id.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -251,10 +252,9 @@ const AppointmentPage: React.FC = () => {
                     <TableCell sx={{ color: '#00A3FF', fontWeight: 600 }}>#{app.id.slice(0, 8)}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar sx={{ width: 32, height: 32, fontSize: 13, bgcolor: '#E0F2FE', color: '#00A3FF', fontWeight: 700 }}>
-                          {app.patient?.name ? app.patient.name.charAt(0) : 'P'}
-                        </Avatar>
-                        <Typography fontWeight={600} color="#1E293B" fontSize={14}>{app.patient?.name}</Typography>
+                        <Typography fontWeight={600} color="#1E293B" fontSize={14}>
+                          {app.patient?.anonymous_name || app.patient?.name || 'N/A'}
+                        </Typography>
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: '#475569', fontSize: 14 }}>{app.doctor?.user?.name}</TableCell>

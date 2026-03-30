@@ -32,15 +32,15 @@ export interface Appointment {
   appointment_time?: string;
   question?: string;
   status?: string;
-  cancelReason?: string;
+  cancel_reason?: string;
   description?: string;
-  noteForAdmin?: string;
+  note_for_admin?: string;
   createdAt?: string;
   payment?: Payment;
   review?: Review;
   paymentAmount?: string; // Using string for BigInt representation
   doctor_payment_status?: string;
-  commissionRate?: number;
+  commission_rate?: number;
   prescriptions?: Prescription[];
   paidAt?: string;
 }
