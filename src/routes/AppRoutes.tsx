@@ -7,6 +7,7 @@ import Appointments from "../pages/Appointments";
 import Patients from "../pages/Patients";
 import Doctors from "../pages/Doctors";
 import Drugs from "../pages/Drug";
+import DrugImports from "../pages/DrugImport";
 import Vouchers from "../pages/Vouchers";
 import Orders from "../pages/Orders";
 import Chat from "../pages/Chat";
@@ -73,6 +74,12 @@ export default function AppRoutes() {
       <Route path="/drugs" element={
         <ProtectedRoute>
           <Drugs />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/drug-import" element={
+        <ProtectedRoute>
+          <DrugImports />
         </ProtectedRoute>
       } />
 

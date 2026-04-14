@@ -12,6 +12,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import LogoutIcon from '@mui/icons-material/Logout';
+import WarehouseIcon from '@mui/icons-material/Warehouse';
 
 const navItems = [
   { label: 'Tổng quan', icon: <DashboardIcon fontSize="small" />, path: '/dashboard' },
@@ -19,6 +20,7 @@ const navItems = [
   { label: 'Bệnh nhân', icon: <PeopleIcon fontSize="small" />, path: '/patients' },
   { label: 'Bác sĩ', icon: <LocalHospitalIcon fontSize="small" />, path: '/doctors' },
   { label: 'Thuốc', icon: <MedicationIcon fontSize="small" />, path: '/drugs' },
+  { label: 'Nhập thuốc', icon: <WarehouseIcon fontSize="small" />, path: '/drug-import' },
   { label: 'Voucher', icon: <ConfirmationNumberIcon fontSize="small" />, path: '/vouchers' },
   { label: 'Đơn hàng', icon: <ReceiptLongIcon fontSize="small" />, path: '/orders' },
   { label: 'Chat', icon: <ChatIcon fontSize="small" />, path: '/chat' },
@@ -49,9 +51,9 @@ const Sidebar: React.FC = () => {
       <Box>
         {/* Logo */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, mb: 4 }}>
-          <Avatar 
-            src="/images/app_icon.png" 
-            sx={{ width: 36, height: 36, borderRadius: '8px', bgcolor: 'transparent' }} 
+          <Avatar
+            src="/images/app_icon.png"
+            sx={{ width: 36, height: 36, borderRadius: '8px', bgcolor: 'transparent' }}
           />
           <Box>
             <Typography fontWeight={700} fontSize={16} lineHeight={1.2}>AnYen</Typography>
@@ -103,9 +105,9 @@ const Sidebar: React.FC = () => {
         alignItems: 'center',
         gap: 1.5
       }}>
-        <Avatar 
-          src={user?.avatar_url || "https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png"} 
-          sx={{ width: 36, height: 36 }} 
+        <Avatar
+          src={user?.avatar_url || "https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png"}
+          sx={{ width: 36, height: 36 }}
         />
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography fontWeight={600} fontSize={13} noWrap>{user?.name || 'Admin'}</Typography>
