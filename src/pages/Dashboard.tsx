@@ -32,7 +32,11 @@ const Dashboard: React.FC = () => {
     totalRevenue: '0',
     doctorCount: '0',
     patientCount: '0',
-    newAppointments: '0'
+    newAppointments: '0',
+    revenueChange: '',
+    patientChange: '',
+    doctorChange: '',
+    appointmentChange: ''
   });
   const [monthRange, setMonthRange] = useState(6);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -51,48 +55,73 @@ const Dashboard: React.FC = () => {
         orderService.getAllOrders()
       ]);
 
-      const totalRev = 
-        appointments.reduce((sum: number, app: any) => sum + Number(app.payment?.total_paid || 0), 0) +
-        orders.reduce((sum: number, order: any) => sum + Number(order.payment?.total_paid || 0), 0);
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
+      const lastMonth = lastMonthDate.getMonth();
+      const lastMonthYear = lastMonthDate.getFullYear();
+
+      // Helper to calculate monthly totals
+      const getMonthlyStats = (month: number, year: number) => {
+        const monthlyAppointments = appointments.filter((app: any) => {
+          const d = new Date(app.appointment_date || app.createdAt);
+          return d.getMonth() === month && d.getFullYear() === year;
+        });
+        const monthlyOrders = orders.filter((order: any) => {
+          const d = new Date(order.createdAt);
+          return d.getMonth() === month && d.getFullYear() === year;
+        });
+        
+        const revenue = 
+          monthlyAppointments.reduce((sum: number, app: any) => sum + Number(app.payment?.total_paid || 0), 0) +
+          monthlyOrders.reduce((sum: number, order: any) => sum + Number(order.payment?.total_paid || 0), 0);
+
+        return { revenue, appointmentsCount: monthlyAppointments.length };
+      };
+
+      const currentMonthStats = getMonthlyStats(currentMonth, currentYear);
+      const lastMonthStats = getMonthlyStats(lastMonth, lastMonthYear);
+
+      // Revenue Change
+      const revChange = lastMonthStats.revenue > 0 
+        ? ((currentMonthStats.revenue - lastMonthStats.revenue) / lastMonthStats.revenue * 100).toFixed(1)
+        : '+0';
+      
+      // Patient Growth (total patients)
+      const patientsThisMonth = patients.filter((p: any) => {
+        const d = new Date(p.createdAt);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      }).length;
+      const patientChange = patients.length > 0
+        ? ((patientsThisMonth / (patients.length - patientsThisMonth || 1)) * 100).toFixed(1)
+        : '+0';
 
       setStatsData({
-        totalRevenue: new Intl.NumberFormat('vi-VN').format(totalRev),
+        totalRevenue: new Intl.NumberFormat('vi-VN').format(currentMonthStats.revenue), // Show current month revenue
         doctorCount: doctors.length.toString(),
         patientCount: patients.length.toString(),
-        newAppointments: appointments.filter((app: any) => app.status === 'Pending').length.toString()
+        newAppointments: appointments.filter((app: any) => app.status === 'Pending').length.toString(),
+        revenueChange: `${Number(revChange) >= 0 ? '+' : ''}${revChange}%`,
+        patientChange: `+${patientChange}%`,
+        doctorChange: '+0%', // Doctors don't change much
+        appointmentChange: ''
       });
 
-      // Generate chart data for last monthRange months
-      const months: any[] = [];
-      const today = new Date();
-      
+      // Generate chart data
+      const chartRows: any[] = [];
       for (let i = monthRange - 1; i >= 0; i--) {
-        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        const monthLabel = `Tháng ${d.getMonth() + 1}`;
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const stats = getMonthlyStats(d.getMonth(), d.getFullYear());
         
-        const monthlyAppRevenue = appointments
-          .filter((app: any) => {
-            const appDate = new Date(app.appointment_date || app.createdAt);
-            return appDate.getMonth() === d.getMonth() && appDate.getFullYear() === d.getFullYear();
-          })
-          .reduce((sum: number, app: any) => sum + Number(app.payment?.total_paid || 0), 0);
-
-        const monthlyOrderRevenue = orders
-          .filter((order: any) => {
-            const orderDate = new Date(order.createdAt);
-            return orderDate.getMonth() === d.getMonth() && orderDate.getFullYear() === d.getFullYear();
-          })
-          .reduce((sum: number, order: any) => sum + Number(order.payment?.total_paid || 0), 0);
-        
-        months.push({
-          month: monthLabel,
-          revenue: (monthlyAppRevenue + monthlyOrderRevenue) / 1000, // Show in 'k' or 'M' for scaling?
-          // I will use total but for visualization k might be better. 
-          // Let's use total but tooltip can format.
-          actualRevenue: monthlyAppRevenue + monthlyOrderRevenue
+        chartRows.push({
+          month: `Tháng ${d.getMonth() + 1}`,
+          revenue: stats.revenue / 1000,
+          actualRevenue: stats.revenue
         });
       }
-      setChartData(months);
+      setChartData(chartRows);
 
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -102,9 +131,9 @@ const Dashboard: React.FC = () => {
   };
 
   const statCards = [
-    { label: 'Tổng doanh thu', subLabel: 'VND', value: statsData.totalRevenue, change: '+12.5%', icon: <DashboardIcon />, iconBg: '#EBF5FF' },
-    { label: 'Số lượng Bác sĩ', subLabel: 'người', value: statsData.doctorCount, change: '+2%', icon: <LocalHospitalIcon />, iconBg: '#E8F8F1' },
-    { label: 'Tổng số Bệnh nhân', subLabel: 'người', value: statsData.patientCount, change: '+5.2%', icon: <PeopleIcon />, iconBg: '#F5EEF8' },
+    { label: 'Doanh thu tháng này', subLabel: 'VND', value: statsData.totalRevenue, change: statsData.revenueChange, icon: <DashboardIcon />, iconBg: '#EBF5FF' },
+    { label: 'Số lượng Bác sĩ', subLabel: 'người', value: statsData.doctorCount, change: statsData.doctorChange, icon: <LocalHospitalIcon />, iconBg: '#E8F8F1' },
+    { label: 'Tổng số Bệnh nhân', subLabel: 'người', value: statsData.patientCount, change: statsData.patientChange, icon: <PeopleIcon />, iconBg: '#F5EEF8' },
     { label: 'Lịch hẹn chờ duyệt', subLabel: '', value: statsData.newAppointments, change: '', icon: <CalendarTodayIcon />, iconBg: '#FEF5E7' },
   ];
   return (
