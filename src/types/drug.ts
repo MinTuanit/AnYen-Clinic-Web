@@ -1,12 +1,11 @@
 export interface Drug {
   id: string;
-  medicine_id?: string;
   name: string;
-  price: number | string;
   description?: string;
-  category?: string;
-  unit?: string;
-  stock: number;
+  unit?: 'tablet' | 'bottle' | 'tube' | 'box' | 'other';
+  stock?: number; // Aggregate field from backend
+  price?: number | string; // Aggregate field from backend
   createdAt?: string;
   updatedAt?: string;
 }
+

@@ -14,10 +14,7 @@ import {
 import {
   Medication,
   Description,
-  Category,
   Scale,
-  Inventory,
-  AttachMoney,
 } from '@mui/icons-material';
 
 interface DrugDialogProps {
@@ -31,20 +28,14 @@ export interface DrugFormData {
   id?: string;
   name: string;
   subtext: string;
-  category: string;
-  unit: string;
-  stock: number;
-  price: number;
+  unit: 'tablet' | 'bottle' | 'tube' | 'box' | 'other';
 }
 
 const DrugDialog: React.FC<DrugDialogProps> = ({ open, onClose, onSave, drug }) => {
   const [formData, setFormData] = useState<DrugFormData>({
     name: '',
     subtext: '',
-    category: 'Giảm đau',
-    unit: 'Viên',
-    stock: 0,
-    price: 0
+    unit: 'other'
   });
 
   useEffect(() => {
@@ -54,19 +45,13 @@ const DrugDialog: React.FC<DrugDialogProps> = ({ open, onClose, onSave, drug }) 
           id: drug.id,
           name: drug.name || '',
           subtext: drug.description || '',
-          category: drug.category || 'Giảm đau',
-          unit: drug.unit || 'Viên',
-          stock: drug.stock || 0,
-          price: drug.price || 0
+          unit: drug.unit || 'other'
         });
       } else {
         setFormData({
           name: '',
           subtext: '',
-          category: 'Giảm đau',
-          unit: 'Viên',
-          stock: 0,
-          price: 0
+          unit: 'other'
         });
       }
     }
@@ -127,85 +112,34 @@ const DrugDialog: React.FC<DrugDialogProps> = ({ open, onClose, onSave, drug }) 
               Đơn vị tính
             </Typography>
             <TextField
+              select
               fullWidth
               name="unit"
               value={formData.unit}
               onChange={handleChange}
-              placeholder="VD: Viên, Ống, Chai"
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><Scale sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
-            />
+            >
+              <MenuItem value="tablet">Viên (Tablet)</MenuItem>
+              <MenuItem value="bottle">Chai/Lọ (Bottle)</MenuItem>
+              <MenuItem value="tube">Tuýp (Tube)</MenuItem>
+              <MenuItem value="box">Hộp (Box)</MenuItem>
+              <MenuItem value="other">Khác (Other)</MenuItem>
+            </TextField>
           </Grid>
 
           <Grid size={12}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
-              Quy cách đóng gói / Mô tả ngắn
+              Mô tả chi tiết
             </Typography>
             <TextField
               fullWidth
+              multiline
+              rows={3}
               name="subtext"
               value={formData.subtext}
               onChange={handleChange}
-              placeholder="VD: Hộp 10 vỉ x 10 viên"
+              placeholder="Nhập mô tả thuốc, thành phần, hướng dẫn sử dụng..."
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><Description sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
-            />
-          </Grid>
-
-          {/* Category and Price */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
-              Danh mục
-            </Typography>
-            <TextField
-              select
-              fullWidth
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><Category sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
-            >
-              <MenuItem value="Giảm đau">Giảm đau</MenuItem>
-              <MenuItem value="Trầm cảm">Trầm cảm</MenuItem>
-              <MenuItem value="An thần">An thần</MenuItem>
-              <MenuItem value="Kháng sinh">Kháng sinh</MenuItem>
-              <MenuItem value="Bổ sung">Bổ sung</MenuItem>
-              <MenuItem value="Vật tư">Vật tư y tế</MenuItem>
-            </TextField>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
-              Đơn giá (VNĐ)
-            </Typography>
-            <TextField
-              fullWidth
-              type="number"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              onFocus={(e) => e.target.select()}
-              slotProps={{
-                input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> },
-                htmlInput: { min: 0 }
-              }}
-            />
-          </Grid>
-
-          {/* Stock Info */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
-              Số lượng tồn kho
-            </Typography>
-            <TextField
-              fullWidth
-              type="number"
-              name="stock"
-              value={formData.stock}
-              onChange={handleChange}
-              onFocus={(e) => e.target.select()}
-              slotProps={{
-                input: { startAdornment: <InputAdornment position="start"><Inventory sx={{ color: '#94A3B8' }} /></InputAdornment> },
-                htmlInput: { min: 0 }
-              }}
             />
           </Grid>
         </Grid>

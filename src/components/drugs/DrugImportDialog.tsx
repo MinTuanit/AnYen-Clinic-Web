@@ -44,8 +44,11 @@ const DrugImportDialog: React.FC<DrugImportDialogProps> = ({ open, onClose, onSa
     drug_id: '',
     batch_number: '',
     import_price: 0,
+    sold_price: 0,
     quantity: 0,
     import_date: formatToLocalDateTime(),
+    expiration_date: formatToLocalDateTime(new Date(new Date().setFullYear(new Date().getFullYear() + 2))),
+    supplier: '',
   });
   const [drugs, setDrugs] = useState<Drug[]>([]);
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
@@ -71,8 +74,11 @@ const DrugImportDialog: React.FC<DrugImportDialogProps> = ({ open, onClose, onSa
           drug_id: drugImport.drug_id,
           batch_number: drugImport.batch_number,
           import_price: Number(drugImport.import_price),
+          sold_price: Number(drugImport.sold_price),
           quantity: drugImport.quantity,
           import_date: formatToLocalDateTime(drugImport.import_date),
+          expiration_date: formatToLocalDateTime(drugImport.expiration_date),
+          supplier: drugImport.supplier || '',
         });
         const drug = drugs.find(d => d.id === drugImport.drug_id);
         if (drug) setSelectedDrug(drug);
@@ -81,8 +87,11 @@ const DrugImportDialog: React.FC<DrugImportDialogProps> = ({ open, onClose, onSa
           drug_id: '',
           batch_number: '',
           import_price: 0,
+          sold_price: 0,
           quantity: 0,
           import_date: formatToLocalDateTime(),
+          expiration_date: formatToLocalDateTime(new Date(new Date().setFullYear(new Date().getFullYear() + 2))),
+          supplier: '',
         });
         setSelectedDrug(null);
       }
@@ -207,7 +216,38 @@ const DrugImportDialog: React.FC<DrugImportDialogProps> = ({ open, onClose, onSa
             />
           </Grid>
 
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+              Giá bán (VNĐ)
+            </Typography>
+            <TextField
+              fullWidth
+              type="number"
+              name="sold_price"
+              value={formData.sold_price}
+              onChange={handleChange}
+              onFocus={(e) => e.target.select()}
+              slotProps={{
+                input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> },
+                htmlInput: { min: 0 }
+              }}
+            />
+          </Grid>
+
           <Grid size={12}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+              Nhà cung cấp
+            </Typography>
+            <TextField
+              fullWidth
+              name="supplier"
+              value={formData.supplier}
+              onChange={handleChange}
+              placeholder="VD: Công ty Dược phẩm TW1"
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
               Thời gian nhập
             </Typography>
@@ -219,11 +259,25 @@ const DrugImportDialog: React.FC<DrugImportDialogProps> = ({ open, onClose, onSa
               onChange={handleChange}
               slotProps={{
                 input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <CalendarMonth sx={{ color: '#94A3B8' }} />
-                    </InputAdornment>
-                  ),
+                  startAdornment: <InputAdornment position="start"><CalendarMonth sx={{ color: '#94A3B8' }} /></InputAdornment>,
+                }
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+              Hạn sử dụng
+            </Typography>
+            <TextField
+              fullWidth
+              type="datetime-local"
+              name="expiration_date"
+              value={formData.expiration_date}
+              onChange={handleChange}
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start"><CalendarMonth sx={{ color: '#EF4444' }} /></InputAdornment>,
                 }
               }}
             />

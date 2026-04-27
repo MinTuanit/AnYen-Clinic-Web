@@ -5,7 +5,6 @@ import ActionButton from '../components/ActionButton';
 import {
   Box,
   Typography,
-  Chip,
   TextField,
   InputAdornment,
   IconButton,
@@ -18,7 +17,6 @@ import {
   Paper,
   Pagination,
   LinearProgress,
-  Tooltip,
   CircularProgress,
   MenuItem,
   Select,
@@ -28,7 +26,6 @@ import Grid from '@mui/material/Grid';
 import DrugImportDialog from '../components/drugs/DrugImportDialog';
 import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 import SearchIcon from '@mui/icons-material/Search';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
@@ -45,9 +42,10 @@ const DrugImports: React.FC = () => {
   const [selectedImport, setSelectedImport] = useState<DrugImport | null>(null);
   const [imports, setImports] = useState<DrugImport[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [searchDrug, setSearchDrug] = useState('');
+  const [searchBatch, setSearchBatch] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState<number | 'all'>(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>(new Date().getFullYear());
 
   const pageSize = 10;
 
@@ -55,8 +53,8 @@ const DrugImports: React.FC = () => {
     setLoading(true);
     try {
       const data = await drugImportService.getAllDrugImports({
-        month: selectedMonth,
-        year: selectedYear
+        month: selectedMonth === 'all' ? undefined : selectedMonth,
+        year: selectedYear === 'all' ? undefined : selectedYear
       });
       setImports(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -71,10 +69,11 @@ const DrugImports: React.FC = () => {
     fetchImports();
   }, [selectedMonth, selectedYear]);
 
-  const filteredImports = imports.filter(item =>
-    item.drug?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.batch_number.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredImports = imports.filter(item => {
+    const matchesDrug = (item.drug?.name || '').toLowerCase().includes(searchDrug.toLowerCase());
+    const matchesBatch = (item.batch_number || '').toLowerCase().includes(searchBatch.toLowerCase());
+    return matchesDrug && matchesBatch;
+  });
 
   const total = filteredImports.length;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
@@ -118,13 +117,16 @@ const DrugImports: React.FC = () => {
 
   const handleSaveImport = async (data: any) => {
     try {
-      if (selectedImport && selectedImport.id) {
-        await drugImportService.updateDrugImport(selectedImport.id, data);
+      const importId = data.id || selectedImport?.id;
+
+      if (importId) {
+        await drugImportService.updateDrugImport(importId, data);
       } else {
         await drugImportService.createDrugImport(data);
       }
-      fetchImports();
+      await fetchImports();
       setIsImportDialogOpen(false);
+      setSelectedImport(null);
     } catch (error) {
       console.error('Error saving import:', error);
     }
@@ -156,69 +158,97 @@ const DrugImports: React.FC = () => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <TextField
-              placeholder="Tìm kiếm thuốc hoặc số lô..."
-              size="small"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{
-                width: 280,
-                '& .MuiOutlinedInput-root': {
-                  background: '#fff',
-                  borderRadius: '12px',
-                  '& fieldset': { borderColor: '#E2E8F0' },
-                }
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: '#94A3B8' }} />
-                    </InputAdornment>
-                  ),
-                }
-              }}
-            />
-            
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <FormControl size="small" sx={{ minWidth: 100 }}>
-                <Select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                  sx={{ 
-                    borderRadius: '12px', 
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+              <TextField
+                placeholder="Tên thuốc..."
+                size="small"
+                value={searchDrug}
+                onChange={(e) => setSearchDrug(e.target.value)}
+                sx={{
+                  width: 180,
+                  '& .MuiOutlinedInput-root': {
                     background: '#fff',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' }
-                  }}
-                >
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <MenuItem key={i + 1} value={i + 1}>Tháng {i + 1}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                    borderRadius: '12px',
+                    '& fieldset': { borderColor: '#E2E8F0' },
+                  }
+                }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: '#94A3B8', fontSize: '1.2rem' }} />
+                      </InputAdornment>
+                    ),
+                  }
+                }}
+              />
 
-              <FormControl size="small" sx={{ minWidth: 100 }}>
-                <Select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  sx={{ 
-                    borderRadius: '12px', 
+              <TextField
+                placeholder="Số lô..."
+                size="small"
+                value={searchBatch}
+                onChange={(e) => setSearchBatch(e.target.value)}
+                sx={{
+                  width: 140,
+                  '& .MuiOutlinedInput-root': {
                     background: '#fff',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' }
-                  }}
-                >
-                  {Array.from({ length: 5 }, (_, i) => {
-                    const year = new Date().getFullYear() - i;
-                    return <MenuItem key={year} value={year}>Năm {year}</MenuItem>;
-                  })}
-                </Select>
-              </FormControl>
+                    borderRadius: '12px',
+                    '& fieldset': { borderColor: '#E2E8F0' },
+                  }
+                }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: '#94A3B8', fontSize: '1.2rem' }} />
+                      </InputAdornment>
+                    ),
+                  }
+                }}
+              />
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <Select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value as number | 'all')}
+                    sx={{
+                      borderRadius: '12px',
+                      background: '#fff',
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' }
+                    }}
+                  >
+                    <MenuItem value="all">Tất cả tháng</MenuItem>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <MenuItem key={i + 1} value={i + 1}>Tháng {i + 1}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <Select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value as number | 'all')}
+                    sx={{
+                      borderRadius: '12px',
+                      background: '#fff',
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E2E8F0' }
+                    }}
+                  >
+                    <MenuItem value="all">Tất cả năm</MenuItem>
+                    {Array.from({ length: 5 }, (_, i) => {
+                      const year = new Date().getFullYear() - i;
+                      return <MenuItem key={year} value={year}>Năm {year}</MenuItem>;
+                    })}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              <ActionButton
+                label="Nhập thuốc"
+                onClick={handleAddImport}
+              />
             </Box>
-
-            <ActionButton
-              label="Nhập thuốc"
-              onClick={handleAddImport}
-            />
           </Box>
         </Box>
 
@@ -263,10 +293,11 @@ const DrugImports: React.FC = () => {
                 <TableRow>
                   <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', py: 2 }}>Số lô</TableCell>
                   <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Tên thuốc</TableCell>
-                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Giá nhập</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Giá nhập / Bán</TableCell>
                   <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Số lượng</TableCell>
                   <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Còn lại</TableCell>
-                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Thời gian nhập</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Hạn sử dụng</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Nhà cung cấp</TableCell>
                   <TableCell align="right" sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', pr: 3 }}>Thao tác</TableCell>
                 </TableRow>
               </TableHead>
@@ -277,10 +308,14 @@ const DrugImports: React.FC = () => {
                     <TableCell>
                       <Box>
                         <Typography variant="body2" fontWeight={700} color="#1E293B">{item.drug?.name || 'N/A'}</Typography>
-                        <Typography variant="caption" color="text.secondary">{item.drug?.medicine_id}</Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: '#1E293B', fontWeight: 600 }}>{formatCurrency(item.import_price)}</TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600} color="#1E293B">N: {formatCurrency(item.import_price)}</Typography>
+                        <Typography variant="body2" fontWeight={600} color="#27AE60">B: {formatCurrency(item.sold_price)}</Typography>
+                      </Box>
+                    </TableCell>
                     <TableCell sx={{ color: '#475569', fontWeight: 500 }}>{item.quantity}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 100 }}>
@@ -304,7 +339,13 @@ const DrugImports: React.FC = () => {
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: '#64748B' }}>{formatDate(item.import_date)}</TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" color="#1E293B">{formatDate(item.expiration_date).split(',')[0]}</Typography>
+                        <Typography variant="caption" color="text.secondary">Nhập: {formatDate(item.import_date).split(',')[0]}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ color: '#64748B' }}>{item.supplier || 'N/A'}</TableCell>
                     <TableCell align="right" sx={{ pr: 2 }}>
                       <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                         <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditImport(item)}>
@@ -313,11 +354,6 @@ const DrugImports: React.FC = () => {
                         <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(item)}>
                           <DeleteIcon fontSize="small" />
                         </IconButton>
-                        <Tooltip title="Actions">
-                          <IconButton size="small" sx={{ color: '#94A3B8' }}>
-                            <MoreVertIcon />
-                          </IconButton>
-                        </Tooltip>
                       </Box>
                     </TableCell>
                   </TableRow>

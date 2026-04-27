@@ -5,7 +5,6 @@ import ActionButton from '../components/ActionButton';
 import {
   Box,
   Typography,
-  Chip,
   TextField,
   InputAdornment,
   IconButton,
@@ -18,14 +17,12 @@ import {
   Paper,
   Pagination,
   LinearProgress,
-  Tooltip,
   CircularProgress
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import DrugDialog from '../components/drugs/DrugDialog';
 import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 import SearchIcon from '@mui/icons-material/Search';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
@@ -35,13 +32,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { drugService } from '../services/drugService';
 import { Drug } from '../types/drug';
 
-const categoryStyles: Record<string, { bg: string, color: string }> = {
-  'Giảm đau': { bg: '#F1F5F9', color: '#475569' },
-  'Trầm cảm': { bg: '#F1F5F9', color: '#475569' },
-  'An thần': { bg: '#F1F5F9', color: '#475569' },
-  'Vật tư': { bg: '#F1F5F9', color: '#475569' },
-  'Kháng sinh': { bg: '#F1F5F9', color: '#475569' },
-  'Bổ sung': { bg: '#F1F5F9', color: '#475569' },
+export const UNIT_LABELS: Record<string, string> = {
+  tablet: 'Viên',
+  bottle: 'Chai/Lọ',
+  tube: 'Tuýp',
+  box: 'Hộp',
+  other: 'Khác'
 };
 
 const Drugs: React.FC = () => {
@@ -80,8 +76,8 @@ const Drugs: React.FC = () => {
   // Dynamic Statistics Calculations
   const totalTypes = Array.isArray(drugs) ? drugs.length : 0;
   const lowStockThreshold = 20; // Simple threshold for now
-  const lowStockCount = Array.isArray(drugs) ? drugs.filter(m => m.stock < lowStockThreshold).length : 0;
-  const totalValue = Array.isArray(drugs) ? drugs.reduce((sum, d) => sum + (d.stock * Number(d.price)), 0) : 0;
+  const lowStockCount = Array.isArray(drugs) ? drugs.filter(m => (m.stock || 0) < lowStockThreshold).length : 0;
+  const totalValue = Array.isArray(drugs) ? drugs.reduce((sum, d) => sum + ((d.stock || 0) * Number(d.price || 0)), 0) : 0;
 
   const formatTotalValue = (val: number) => {
     if (val >= 1000000) {
@@ -94,11 +90,6 @@ const Drugs: React.FC = () => {
     if (stock < 5) return '#EF4444';
     if (stock < 20) return '#F97316';
     return '#10B981';
-  };
-
-  const formatCurrency = (amount: number | string) => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('vi-VN').format(num) + 'đ';
   };
 
   const handleAddDrug = () => {
@@ -118,21 +109,22 @@ const Drugs: React.FC = () => {
 
   const handleSaveDrug = async (data: any) => {
     try {
-      // Clean payload for backend validation
       const cleanData = {
         name: data.name,
-        price: Number(data.price),
         description: data.description || data.subtext || '',
-        stock: Number(data.stock)
+        unit: data.unit
       };
 
-      if (selectedDrug && selectedDrug.id) {
-        await drugService.updateDrug(selectedDrug.id, cleanData);
+      const drugId = data.id || selectedDrug?.id;
+
+      if (drugId) {
+        await drugService.updateDrug(drugId, cleanData);
       } else {
         await drugService.createDrug(cleanData);
       }
-      fetchDrugs();
+      await fetchDrugs();
       setIsDrugDialogOpen(false);
+      setSelectedDrug(null);
     } catch (error) {
       console.error('Error saving drug:', error);
     }
@@ -233,62 +225,49 @@ const Drugs: React.FC = () => {
             <Table>
               <TableHead sx={{ background: '#F8FAFC' }}>
                 <TableRow>
-                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', py: 2 }}>Mã thuốc</TableCell>
-                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Tên thuốc</TableCell>
-                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Danh mục</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', py: 2 }}>Tên thuốc</TableCell>
+                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Mô tả</TableCell>
                   <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Đơn vị</TableCell>
                   <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Tồn kho</TableCell>
-                  <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Đơn giá</TableCell>
                   <TableCell align="right" sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', pr: 3 }}>Thao tác</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {pagedDrugs.map((d) => (
                   <TableRow key={d.id} sx={{ '&:hover': { background: '#F8FAFC' }, transition: '0.2s', '& td': { py: 2.5, borderBottom: '1px solid #F1F5F9' } }}>
-                    <TableCell sx={{ color: '#00A3FF', fontWeight: 700 }}>{d.medicine_id}</TableCell>
                     <TableCell>
-                      <Box>
-                        <Typography variant="body2" fontWeight={700} color="#1E293B">{d.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{d.description}</Typography>
-                      </Box>
+                      <Typography variant="body2" fontWeight={700} color="#1E293B">{d.name}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={d.category || 'Chưa phân loại'}
-                        size="small"
-                        sx={{
-                          background: categoryStyles[d.category || 'Giảm đau']?.bg || '#F1F5F9',
-                          color: categoryStyles[d.category || 'Giảm đau']?.color || '#475569',
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                          borderRadius: '6px'
-                        }}
-                      />
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', maxWidth: 250 }}>
+                        {d.description || 'Chưa có mô tả'}
+                      </Typography>
                     </TableCell>
-                    <TableCell sx={{ color: '#475569', fontWeight: 500 }}>{d.unit || ''}</TableCell>
+                    <TableCell sx={{ color: '#475569', fontWeight: 500 }}>
+                      {UNIT_LABELS[d.unit as string] || d.unit || ''}
+                    </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 140 }}>
                         <Box sx={{ flex: 1 }}>
                           <LinearProgress
                             variant="determinate"
-                            value={Math.min(100, (d.stock / 100) * 100)}
+                            value={Math.min(100, ((d.stock || 0) / 100) * 100)}
                             sx={{
                               height: 6,
                               borderRadius: 3,
                               bgcolor: '#F1F5F9',
                               '& .MuiLinearProgress-bar': {
-                                bgcolor: getStockColor(d.stock),
+                                bgcolor: getStockColor(d.stock || 0),
                                 borderRadius: 3,
                               }
                             }}
                           />
                         </Box>
-                        <Typography variant="body2" fontWeight={700} color={getStockColor(d.stock)}>
-                          {d.stock}
+                        <Typography variant="body2" fontWeight={700} color={getStockColor(d.stock || 0)}>
+                          {d.stock || 0}
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: '#1E293B', fontWeight: 600 }}>{formatCurrency(d.price)}</TableCell>
                     <TableCell align="right" sx={{ pr: 2 }}>
                       <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                         <IconButton size="small" sx={{ color: '#00A3FF' }} onClick={() => handleEditDrug(d)}>
@@ -297,11 +276,6 @@ const Drugs: React.FC = () => {
                         <IconButton size="small" sx={{ color: '#EF4444' }} onClick={() => handleDeleteClick(d)}>
                           <DeleteIcon fontSize="small" />
                         </IconButton>
-                        <Tooltip title="Actions">
-                          <IconButton size="small" sx={{ color: '#94A3B8' }}>
-                            <MoreVertIcon />
-                          </IconButton>
-                        </Tooltip>
                       </Box>
                     </TableCell>
                   </TableRow>
