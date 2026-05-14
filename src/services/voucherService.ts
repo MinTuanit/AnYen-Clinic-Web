@@ -17,6 +17,11 @@ export const voucherService = {
     return response.data;
   },
 
+  updateVoucher: async (voucherId: string, data: Partial<Voucher>): Promise<any> => {
+    const response = await apiClient.put(`/admin/voucher/${voucherId}`, data);
+    return response.data;
+  },
+
   deleteVoucher: async (voucherId: string): Promise<any> => {
     const response = await apiClient.delete(`/admin/voucher/${voucherId}`);
     return response.data;

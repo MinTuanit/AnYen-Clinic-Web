@@ -100,11 +100,9 @@ const Patients: React.FC = () => {
 
   const filteredPatients = patients.filter(p => {
     const name = p.user?.name || p.anonymous_name || '';
-    const id = p.patient_id || '';
     const phone = p.user?.phone_number || '';
     return (
       name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       phone.includes(searchTerm)
     );
   });
@@ -189,7 +187,7 @@ const Patients: React.FC = () => {
           <Table>
             <TableHead sx={{ background: '#F8FAFC' }}>
               <TableRow>
-                <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>ID</TableCell>
+                {/* <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>ID</TableCell> */}
                 <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Họ tên</TableCell>
                 <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Ngày sinh</TableCell>
                 <TableCell sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase' }}>Giới tính</TableCell>
@@ -214,7 +212,7 @@ const Patients: React.FC = () => {
                 </TableRow>
               ) : pagedPatients.map((row) => (
                 <TableRow key={row.patient_id}>
-                  <TableCell>{row.patient_id}</TableCell>
+                  {/* <TableCell>{row.patient_id}</TableCell> */}
                   <TableCell>{row.user?.name || row.anonymous_name || 'Chưa cập nhật'}</TableCell>
                   <TableCell>{row.date_of_birth ? new Date(row.date_of_birth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}</TableCell>
                   <TableCell>{row.gender === 'Male' ? 'Nam' : row.gender === 'Female' ? 'Nữ' : 'Khác'}</TableCell>
