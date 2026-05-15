@@ -108,12 +108,12 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
         anonymous_name: patient.anonymous_name || '',
         medical_history: patient.medical_history || '',
         allergies: patient.allergies || '',
-        emergency_contact: patient.emergency_contact || '',
-        email: patient.email || patient.user?.email || ''
+        emergency_contact: patient.emergency_contact_number || patient.emergency_contact || patient.emergencyContact || '',
+        email: patient.user?.email || patient.email || ''
       });
       setTabIndex(0);
     }
-  }, [open, patient]);
+  }, [formData.id, open, patient]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -319,16 +319,31 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
               />
             </Grid>
 
-            <Grid size={12}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
                 Email liên hệ
               </Typography>
               <TextField
                 fullWidth
+                type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 slotProps={{ input: { startAdornment: <InputAdornment position="start"><Email sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+                Số điện thoại liên hệ khẩn cấp
+              </Typography>
+              <TextField
+                fullWidth
+                type="tel"
+                name="emergency_contact"
+                value={formData.emergency_contact}
+                onChange={handleChange}
+                slotProps={{ input: { startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
               />
             </Grid>
           </Grid>

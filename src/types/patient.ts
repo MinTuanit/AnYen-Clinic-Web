@@ -16,9 +16,11 @@ export interface Patient {
     id: string;
     name: string;
     phone_number: string;
+    email?: string;
     avatar_url?: string;
     active_status?: boolean;
   };
+  email?: string;
   phoneNumber?: string;
   avatarUrl?: string;
   anonymous_name?: string;
@@ -27,6 +29,9 @@ export interface Patient {
   dateOfBirth?: string;
   gender: string;
   medicalHistory: string;
+  emergency_contact?: string;
+  emergency_contact_number?: string;
+  emergency_contact_email?: string;
   emergencyContact: string;
   allergies: string;
   healthRecords: HealthRecord[];

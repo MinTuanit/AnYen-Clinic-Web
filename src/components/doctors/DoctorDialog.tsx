@@ -427,7 +427,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
                 slotProps={{ input: { startAdornment: <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}><HistoryEdu sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
               />
             </Grid>
-            <Grid size={12}>
+            {/* <Grid size={12}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
                 Địa chỉ (Đường/Số nhà)
               </Typography>
@@ -475,7 +475,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
                 onChange={handleChange}
                 placeholder="VD: 25760"
               />
-            </Grid>
+            </Grid> */}
           </Grid>
         )}
         {tabIndex === 2 && (
