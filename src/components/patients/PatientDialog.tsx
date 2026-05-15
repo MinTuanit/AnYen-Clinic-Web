@@ -28,6 +28,7 @@ import {
   Warning,
   Email
 } from '@mui/icons-material';
+import { countryCodes, formatPhoneWithCountryCode, splitPhoneNumber } from '../../utils/phone';
 
 interface PatientDialogProps {
   open: boolean;
@@ -39,6 +40,7 @@ interface PatientDialogProps {
 export interface PatientFormData {
   id?: string;
   name: string;
+  country_code: string;
   phone_number: string;
   password?: string;
   active_status: boolean;
@@ -56,6 +58,7 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
   const [tabIndex, setTabIndex] = useState(0);
   const [formData, setFormData] = useState<PatientFormData>({
     name: '',
+    country_code: '+84',
     phone_number: '',
     password: '',
     active_status: true,
@@ -74,6 +77,7 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
     if (!patient) {
       setFormData({
         name: '',
+        country_code: '+84',
         phone_number: '',
         password: '',
         active_status: true,
@@ -91,10 +95,12 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
     }
     // Chỉ setFormData nếu patient.id khác với formData.id (hoặc so sánh sâu hơn nếu cần)
     if (patient.patient_id !== formData.id) {
+      const phone = splitPhoneNumber(patient.user?.phone_number || patient.phone || '');
       setFormData({
         id: patient.id || patient.patient_id,
         name: patient.user?.name || patient.name || '',
-        phone_number: patient.user?.phone_number || patient.phone || '',
+        country_code: phone.countryCode,
+        phone_number: phone.nationalNumber,
         active_status: patient.user?.active_status ?? true,
         avatar_url: patient.user?.avatar_url || patient.avatar_url || 'https://ngjrnpiopnjfcwyifslo.supabase.co/storage/v1/object/public/avatar/user.png',
         date_of_birth: patient.date_of_birth || patient.dob || '',
@@ -102,12 +108,12 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
         anonymous_name: patient.anonymous_name || '',
         medical_history: patient.medical_history || '',
         allergies: patient.allergies || '',
-        emergency_contact: patient.emergency_contact || '',
-        email: patient.email || patient.user?.email || ''
+        emergency_contact: patient.emergency_contact_number || patient.emergency_contact || patient.emergencyContact || '',
+        email: patient.user?.email || patient.email || ''
       });
       setTabIndex(0);
     }
-  }, [open, patient]);
+  }, [formData.id, open, patient]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -119,7 +125,10 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
   };
 
   const handleSubmit = () => {
-    onSave(formData);
+    onSave({
+      ...formData,
+      phone_number: formatPhoneWithCountryCode(formData.country_code, formData.phone_number),
+    });
     onClose();
   };
 
@@ -201,13 +210,31 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
                 Số điện thoại
               </Typography>
-              <TextField
-                fullWidth
-                name="phone_number"
-                value={formData.phone_number}
-                onChange={handleChange}
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
-              />
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  select
+                  name="country_code"
+                  value={formData.country_code}
+                  onChange={handleChange}
+                  sx={{ width: 130, flexShrink: 0 }}
+                >
+                  {countryCodes.map((country) => (
+                    <MenuItem key={country.code} value={country.code}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <img src={country.flag} alt={country.name} style={{ width: 22, height: 15, borderRadius: 2 }} />
+                        <Typography variant="body2">{country.code}</Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  fullWidth
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                  slotProps={{ input: { startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+                />
+              </Box>
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -292,16 +319,31 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
               />
             </Grid>
 
-            <Grid size={12}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
                 Email liên hệ
               </Typography>
               <TextField
                 fullWidth
+                type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 slotProps={{ input: { startAdornment: <InputAdornment position="start"><Email sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+                Số điện thoại liên hệ khẩn cấp
+              </Typography>
+              <TextField
+                fullWidth
+                type="tel"
+                name="emergency_contact"
+                value={formData.emergency_contact}
+                onChange={handleChange}
+                slotProps={{ input: { startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
               />
             </Grid>
           </Grid>

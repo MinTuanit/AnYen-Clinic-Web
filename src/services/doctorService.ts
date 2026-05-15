@@ -46,6 +46,7 @@ export const doctorService = {
       educationHistory: doctor.education_history || doctor.educationHistory,
       price: String(doctor.price),
       province_code: doctor.address?.province_code || doctor.province_code,
+      district_code: doctor.address?.district_code || doctor.district_code,
       ward_code: doctor.address?.ward_code || doctor.ward_code,
       street: doctor.address?.street || doctor.street,
     });
@@ -68,6 +69,7 @@ export const doctorService = {
       price: String(doctor.price),
       approval_status: doctor.approval_status || doctor.approvalStatus,
       province_code: doctor.address?.province_code || doctor.address?.provinceCode || doctor.province_code,
+      district_code: doctor.address?.district_code || doctor.address?.districtCode || doctor.district_code,
       ward_code: doctor.address?.ward_code || doctor.address?.wardCode || doctor.ward_code,
       street: doctor.address?.street || doctor.street,
       certification_urls: doctor.certification_urls || []

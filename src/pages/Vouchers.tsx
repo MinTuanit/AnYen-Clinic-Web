@@ -32,6 +32,7 @@ import DeleteConfirmDialog from '../components/common/DeleteConfirmDialog';
 
 import { voucherService } from '../services/voucherService';
 import { Voucher } from '../types/voucher';
+import { useNotification } from '../contexts/useNotification';
 
 const Vouchers: React.FC = () => {
   const [tab, setTab] = useState(0); // 0: Tất cả, 1: Đang chạy (Active), 2: Hết hạn (Inactive)
@@ -41,6 +42,7 @@ const Vouchers: React.FC = () => {
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [loading, setLoading] = useState(false);
+  const { showNotification } = useNotification();
 
   const pageSize = 10;
 
@@ -106,16 +108,32 @@ const Vouchers: React.FC = () => {
 
   const handleSaveVoucher = async (data: any) => {
     try {
+      // Loại bỏ id khỏi payload nếu có
+      const { id, ...rest } = data;
+      const payload = {
+        ...rest,
+        code: data.code?.trim(),
+        description: data.description?.trim(),
+        max_discount: data.discount_type === 'Percent' && data.max_discount > 0 ? data.max_discount : null,
+        usage_limit: data.usage_limit > 0 ? data.usage_limit : null,
+        expires_at: data.expires_at || null,
+      };
+      let response;
       if (selectedVoucher) {
-        // Update logic not in backend controller? Let's check. 
-        // Admin controller has only create and delete.
+        response = await voucherService.updateVoucher(selectedVoucher.id, payload);
       } else {
-        await voucherService.createVoucher(data);
+        response = await voucherService.createVoucher(payload);
+      }
+      if (response?.err === 1) {
+        showNotification(response.mes || 'Không thể lưu voucher', 'error');
+        return;
       }
       fetchVouchers();
       setIsVoucherDialogOpen(false);
+      showNotification(selectedVoucher ? 'Cập nhật voucher thành công' : 'Thêm voucher thành công');
     } catch (error) {
       console.error('Error saving voucher:', error);
+      showNotification('Có lỗi xảy ra khi lưu voucher', 'error');
     }
   };
 

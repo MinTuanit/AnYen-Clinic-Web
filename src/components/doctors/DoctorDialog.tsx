@@ -29,6 +29,7 @@ import {
   CloudUpload,
   DeleteOutline
 } from '@mui/icons-material';
+import { countryCodes, formatPhoneWithCountryCode, splitPhoneNumber } from '../../utils/phone';
 
 interface DoctorDialogProps {
   open: boolean;
@@ -39,6 +40,7 @@ interface DoctorDialogProps {
 
 interface DoctorFormData {
   name: string;
+  country_code: string;
   phone_number: string;
   password: string;
   role_value: string;
@@ -55,6 +57,7 @@ interface DoctorFormData {
   certification_urls: string[];
   street?: string;
   province_code?: string;
+  district_code?: string;
   ward_code?: string;
 }
 
@@ -62,6 +65,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
   const [tabIndex, setTabIndex] = useState(0);
   const [formData, setFormData] = useState<DoctorFormData>({
     name: '',
+    country_code: '+84',
     phone_number: '',
     password: '',
     role_value: 'doctor',
@@ -78,6 +82,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
     certification_urls: [],
     street: '',
     province_code: '',
+    district_code: '',
     ward_code: ''
   });
 
@@ -85,9 +90,11 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
     if (open) {
       if (doctor) {
         const doc = doctor as any;
+        const phone = splitPhoneNumber(doc.user?.phone_number || doc.phone_number || doc.phone || '');
         setFormData({
           name: doc.user?.name || doc.name || '',
-          phone_number: doc.user?.phone_number || doc.phone_number || doc.phone || '',
+          country_code: phone.countryCode,
+          phone_number: phone.nationalNumber,
           password: '', // Don't populate password
           role_value: doc.role_value || 'doctor',
           active_status: doc.user?.active_status ?? doc.active_status ?? true,
@@ -103,11 +110,13 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
           certification_urls: doc.certification_urls || [],
           street: doc.address?.street || '',
           province_code: doc.address?.province_code || doc.address?.provinceCode || '',
+          district_code: doc.address?.district_code || doc.address?.districtCode || '',
           ward_code: doc.address?.ward_code || doc.address?.wardCode || ''
         });
       } else {
         setFormData({
           name: '',
+          country_code: '+84',
           phone_number: '',
           password: '',
           role_value: 'doctor',
@@ -124,6 +133,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
           certification_urls: [],
           street: '',
           province_code: '',
+          district_code: '',
           ward_code: ''
         });
       }
@@ -136,9 +146,9 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
     if (type === 'number') {
       const cleanedValue = value.replace(/^0+/, '');
       const numValue = cleanedValue === '' ? 0 : Number(cleanedValue);
-      setFormData(prev => ({ 
-        ...prev, 
-        [name]: numValue < 0 ? 0 : numValue 
+      setFormData(prev => ({
+        ...prev,
+        [name]: numValue < 0 ? 0 : numValue
       }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -150,7 +160,10 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
   };
 
   const handleSubmit = () => {
-    onSave(formData);
+    onSave({
+      ...formData,
+      phone_number: formatPhoneWithCountryCode(formData.country_code, formData.phone_number),
+    });
     onClose();
   };
 
@@ -235,14 +248,32 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
                 Số điện thoại
               </Typography>
-              <TextField
-                fullWidth
-                name="phone_number"
-                value={formData.phone_number}
-                onChange={handleChange}
-                placeholder="Dùng làm tên đăng nhập"
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
-              />
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  select
+                  name="country_code"
+                  value={formData.country_code}
+                  onChange={handleChange}
+                  sx={{ mb: 1, width: '130px' }}
+                >
+                  {countryCodes.map((country) => (
+                    <MenuItem key={country.code} value={country.code}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <img src={country.flag} alt={country.name} style={{ width: 22, height: 15, borderRadius: 2 }} />
+                        <Typography variant="body2">{country.code}</Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  fullWidth
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                  placeholder="Dùng làm tên đăng nhập"
+                  slotProps={{ input: { startAdornment: <InputAdornment position="start"><Phone sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
+                />
+              </Box>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
@@ -328,7 +359,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
                 value={formData.price}
                 onChange={handleChange}
                 onFocus={(e) => e.target.select()}
-                slotProps={{ 
+                slotProps={{
                   input: { startAdornment: <InputAdornment position="start"><AttachMoney sx={{ color: '#94A3B8' }} /></InputAdornment> },
                   htmlInput: { min: 0 }
                 }}
@@ -396,7 +427,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
                 slotProps={{ input: { startAdornment: <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}><HistoryEdu sx={{ color: '#94A3B8' }} /></InputAdornment> } }}
               />
             </Grid>
-            <Grid size={12}>
+            {/* <Grid size={12}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
                 Địa chỉ (Đường/Số nhà)
               </Typography>
@@ -423,6 +454,18 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
+                Mã Quận/Huyện
+              </Typography>
+              <TextField
+                fullWidth
+                name="district_code"
+                value={formData.district_code}
+                onChange={handleChange}
+                placeholder="VD: 760"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
                 Mã Phường/Xã
               </Typography>
               <TextField
@@ -432,7 +475,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
                 onChange={handleChange}
                 placeholder="VD: 25760"
               />
-            </Grid>
+            </Grid> */}
           </Grid>
         )}
         {tabIndex === 2 && (
