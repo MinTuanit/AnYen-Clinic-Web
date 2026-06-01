@@ -109,7 +109,7 @@ const PatientDialog: React.FC<PatientDialogProps> = ({ open, onClose, onSave, pa
         medical_history: patient.medical_history || '',
         allergies: patient.allergies || '',
         emergency_contact: patient.emergency_contact_number || patient.emergency_contact || patient.emergencyContact || '',
-        email: patient.user?.email || patient.email || ''
+        email: patient.user?.email || patient.email || patient.emergency_contact_email || ''
       });
       setTabIndex(0);
     }
