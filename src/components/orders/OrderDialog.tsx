@@ -59,7 +59,8 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
           drugs: order.prescription?.prescription_details?.map((d: any) => ({
             name: d.medicine_name || d.drug?.name,
             dosage: d.dosage,
-            quantity: d.quantity,
+            quantity: Number(d.amount ?? d.quantity ?? 0),
+            amount: Number(d.amount ?? d.quantity ?? 0),
             price: Number(d.drug?.price || 0)
           })) || [],
           voucher: order.voucher || null
@@ -87,7 +88,7 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
   };
 
   const calculateSubtotal = () => {
-    return formData.drugs.reduce((sum, med) => sum + (med.price * med.quantity), 0);
+    return formData.drugs.reduce((sum, med) => sum + (med.price * (med.quantity ?? med.amount ?? 0)), 0);
   };
 
   const calculateDiscount = () => {
@@ -261,9 +262,9 @@ const OrderDialog: React.FC<OrderDialogProps> = ({ open, onClose, onSave, order 
                         <Typography variant="body2" fontWeight={600}>{med.name}</Typography>
                         <Typography variant="caption" color="text.secondary">{med.dosage}</Typography>
                       </TableCell>
-                      <TableCell align="center">{med.quantity}</TableCell>
+                      <TableCell align="center">{med.quantity ?? med.amount ?? 0}</TableCell>
                       <TableCell align="right">{formatCurrency(med.price)}</TableCell>
-                      <TableCell align="right">{formatCurrency(med.price * med.quantity)}</TableCell>
+                      <TableCell align="right">{formatCurrency(med.price * (med.quantity ?? med.amount ?? 0))}</TableCell>
                     </TableRow>
                   )) : (
                     <TableRow>
