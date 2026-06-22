@@ -44,7 +44,7 @@ interface DoctorFormData {
   phone_number: string;
   password: string;
   role_value: string;
-  active_status: boolean;
+  info_status: string;
   specialization: string;
   workplace: string;
   year_experience: number;
@@ -69,7 +69,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
     phone_number: '',
     password: '',
     role_value: 'doctor',
-    active_status: true,
+    info_status: '',
     specialization: '',
     workplace: '',
     year_experience: 0,
@@ -97,7 +97,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
           phone_number: phone.nationalNumber,
           password: '', // Don't populate password
           role_value: doc.role_value || 'doctor',
-          active_status: doc.user?.active_status ?? doc.active_status ?? true,
+          info_status: doc.user?.info_status ?? doc.info_status ?? '',
           specialization: doc.specialization || '',
           workplace: doc.workplace || '',
           year_experience: doc.year_experience || doc.yearExperience || 0,
@@ -120,7 +120,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
           phone_number: '',
           password: '',
           role_value: 'doctor',
-          active_status: true,
+          info_status: '',
           specialization: '',
           workplace: '',
           year_experience: 0,
@@ -291,17 +291,18 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
-                Trạng thái tài khoản
+                Trạng thái phê duyệt
               </Typography>
               <TextField
                 select
                 fullWidth
-                name="active_status"
-                value={String(formData.active_status)}
-                onChange={(e) => setFormData(prev => ({ ...prev, active_status: e.target.value === 'true' }))}
+                name="approval_status"
+                value={formData.approval_status}
+                onChange={handleChange}
               >
-                <MenuItem value="true">Hoạt động</MenuItem>
-                <MenuItem value="false">Khóa tài khoản</MenuItem>
+                <MenuItem value="Pending">Đang chờ (Pending)</MenuItem>
+                <MenuItem value="Approved">Đã duyệt (Approved)</MenuItem>
+                <MenuItem value="Hidden">Ẩn (Hidden)</MenuItem>
               </TextField>
             </Grid>
           </Grid>
@@ -383,19 +384,15 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ open, onClose, onSave, doct
             </Grid>
             <Grid size={12}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#64748B', mb: 1, display: 'block' }}>
-                Trạng thái phê duyệt
+                Châm ngôn bác sĩ
               </Typography>
               <TextField
-                select
                 fullWidth
-                name="approval_status"
-                value={formData.approval_status}
+                name="info_status"
+                value={formData.info_status}
                 onChange={handleChange}
-                helperText="Trạng thái hiển thị bác sĩ trên ứng dụng"
+                placeholder="Châm ngôn bác sĩ"
               >
-                <MenuItem value="Pending">Đang chờ (Pending)</MenuItem>
-                <MenuItem value="Approved">Đã duyệt (Approved)</MenuItem>
-                <MenuItem value="Hidden">Ẩn (Hidden)</MenuItem>
               </TextField>
             </Grid>
             <Grid size={12}>
