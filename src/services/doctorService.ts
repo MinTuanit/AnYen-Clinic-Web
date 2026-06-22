@@ -45,16 +45,16 @@ export const doctorService = {
       infoStatus: doctor.info_status || doctor.infoStatus || 'Active',
       educationHistory: doctor.education_history || doctor.educationHistory,
       price: String(doctor.price),
-      province_code: doctor.address?.province_code || doctor.province_code,
-      district_code: doctor.address?.district_code || doctor.district_code,
-      ward_code: doctor.address?.ward_code || doctor.ward_code,
-      street: doctor.address?.street || doctor.street,
+      province_code: doctor.address?.province_code || doctor.province_code || "",
+      district_code: doctor.address?.district_code || doctor.district_code || "",
+      ward_code: doctor.address?.ward_code || doctor.ward_code || "",
+      street: doctor.address?.street || doctor.street || "",
     });
   },
 
   editDoctor: async (doctor: any) => {
     const docId = doctor.doctor_id || doctor.doctorId;
-    return apiClient.patch('/doctor/edit-doctor', {
+    return apiClient.patch('/admin/edit-doctor', {
       user_id: docId,
       phone: doctor.phone || doctor.user?.phone_number || doctor.phone_number,
       name: doctor.name || doctor.user?.name,
@@ -68,10 +68,10 @@ export const doctorService = {
       educationHistory: doctor.education_history || doctor.educationHistory,
       price: String(doctor.price),
       approval_status: doctor.approval_status || doctor.approvalStatus,
-      province_code: doctor.address?.province_code || doctor.address?.provinceCode || doctor.province_code,
-      district_code: doctor.address?.district_code || doctor.address?.districtCode || doctor.district_code,
-      ward_code: doctor.address?.ward_code || doctor.address?.wardCode || doctor.ward_code,
-      street: doctor.address?.street || doctor.street,
+      province_code: doctor.address?.province_code || doctor.address?.provinceCode || doctor.province_code || "",
+      district_code: doctor.address?.district_code || doctor.address?.districtCode || doctor.district_code || "",
+      ward_code: doctor.address?.ward_code || doctor.address?.wardCode || doctor.ward_code || "",
+      street: doctor.address?.street || doctor.street || doctor.address?.streetAddress || doctor.streetAddress || "",
       certification_urls: doctor.certification_urls || []
     });
   },
@@ -89,5 +89,27 @@ export const doctorService = {
     return apiClient.post('/admin/upload-avatar-doctor', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-  }
+  },
+
+  uploadCertifications: async (doctorId: string, files: File[]) => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    formData.append('doctor_id', doctorId);
+
+    const response = await apiClient.post(
+      '/doctor/certifications',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    return response.data;
+  },
+
 };
